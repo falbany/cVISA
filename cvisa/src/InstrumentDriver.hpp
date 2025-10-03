@@ -2,7 +2,7 @@
 #define CVISA_INSTRUMENT_DRIVER_HPP
 
 #include "VisaInstrument.hpp"
-#include "Command.hpp" // Include CommandSpec for the helper function
+#include "Command.hpp"
 #include <string>
 #include <stdexcept>
 
@@ -13,10 +13,8 @@ namespace drivers {
  * @class InstrumentDriver
  * @brief An abstract base class for creating instrument-specific drivers.
  *
- * This class provides the basic structure for building high-level abstractions
- * on top of the generic VisaInstrument. It now also provides a protected helper
- * function, `executeCommand`, to centralize the logic of formatting and
- * executing SCPI commands, promoting code reuse across all derived drivers.
+ * This class provides protected helper functions (`executeWrite`, `executeQuery`)
+ * to centralize the logic for formatting and executing SCPI commands.
  */
 class InstrumentDriver {
 public:
@@ -25,7 +23,6 @@ public:
 
     virtual ~InstrumentDriver() = default;
 
-    // Drivers are tied to a specific instrument session and are non-copyable/movable.
     InstrumentDriver(const InstrumentDriver&) = delete;
     InstrumentDriver& operator=(const InstrumentDriver&) = delete;
     InstrumentDriver(InstrumentDriver&&) = delete;
@@ -33,33 +30,40 @@ public:
 
 protected:
     /**
-     * @brief Formats and executes a command based on its specification.
-     * @tparam Args Variadic arguments for formatting the command string.
-     * @param spec The CommandSpec defining the command to execute.
-     * @param args The arguments to be formatted into the command string.
-     * @return The response from the instrument for QUERY commands.
+     * @brief Formats and executes a WRITE command.
      */
     template<typename... Args>
-    std::string executeCommand(const CommandSpec& spec, Args... args) {
-        // Use a C-style buffer for robust and safe formatting
+    void executeWrite(const CommandSpec& spec, Args... args) {
+        if (spec.type != CommandType::WRITE) {
+            throw std::logic_error("Attempted to call executeWrite on a QUERY command.");
+        }
         char buffer[256];
         snprintf(buffer, sizeof(buffer), spec.command, args...);
-        std::string final_command = buffer;
-
-        // Execute based on the command type
-        if (spec.type == CommandType::WRITE) {
-            m_instrument.write(final_command);
-            return ""; // No response for write commands
-        }
-        if (spec.type == CommandType::QUERY) {
-            return m_instrument.query(final_command);
-        }
-
-        // This should be unreachable if the CommandSpec is valid
-        throw std::logic_error("Unknown command type in CommandSpec.");
+        m_instrument.write(buffer);
     }
 
-    // Protected member for direct VISA access by derived classes.
+    /**
+     * @brief Formats and executes a QUERY command, passing a delay to the VISA layer.
+     */
+    template<typename... Args>
+    std::string executeQuery(const CommandSpec& spec, unsigned int delay_ms, Args... args) {
+        if (spec.type != CommandType::QUERY) {
+            throw std::logic_error("Attempted to call executeQuery on a WRITE command.");
+        }
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), spec.command, args...);
+        return m_instrument.query(buffer, 2048, delay_ms);
+    }
+
+    // Overload for queries that don't require formatting or delays
+    std::string executeQuery(const CommandSpec& spec) {
+        if (spec.type != CommandType::QUERY) {
+            throw std::logic_error("Attempted to call executeQuery on a WRITE command.");
+        }
+        return m_instrument.query(spec.command);
+    }
+
+
     VisaInstrument& m_instrument;
 };
 

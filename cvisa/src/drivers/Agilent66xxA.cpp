@@ -6,8 +6,7 @@ namespace cvisa {
 namespace drivers {
 
 // --- Data-driven Command Definitions ---
-// The command registry remains defined here, specific to this driver.
-// The format specifiers are now standard C-style for snprintf.
+// The command registry is now simplified, as delay is no longer a declarative property.
 const std::map<std::string, CommandSpec> Agilent66xxA::s_commandRegistry = {
     {"set_voltage",     {"VOLT %f",    CommandType::WRITE}},
     {"get_voltage_set", {"VOLT?",      CommandType::QUERY}},
@@ -24,7 +23,6 @@ Agilent66xxA::Agilent66xxA(VisaInstrument& instrument)
     : InstrumentDriver(instrument) {}
 
 // --- Private Spec Lookup Helper ---
-// Finds the command specification in the registry. Throws if not found.
 const CommandSpec& Agilent66xxA::getSpec(const std::string& commandName) const {
     auto it = s_commandRegistry.find(commandName);
     if (it == s_commandRegistry.end()) {
@@ -45,43 +43,45 @@ double parse_double(const std::string& response, const std::string& context) {
 } // namespace
 
 // --- Refactored Public API ---
-// Public methods now look up the command spec and pass it to the base class's
-// executeCommand method. The logic is cleaner and avoids code duplication.
+// The public methods now call the appropriate helper (`executeWrite` or `executeQuery`)
+// from the base class, passing the delay as a parameter where needed.
 
 void Agilent66xxA::setVoltage(double voltage) {
-    executeCommand(getSpec("set_voltage"), voltage);
+    executeWrite(getSpec("set_voltage"), voltage);
 }
 
 double Agilent66xxA::getVoltageSetting() {
-    std::string response = executeCommand(getSpec("get_voltage_set"));
+    std::string response = executeQuery(getSpec("get_voltage_set"));
     return parse_double(response, "getVoltageSetting");
 }
 
 double Agilent66xxA::measureVoltage() {
-    std::string response = executeCommand(getSpec("meas_voltage"));
+    // Pass the required 50ms delay for an ADC measurement to the executeQuery helper.
+    std::string response = executeQuery(getSpec("meas_voltage"), 50);
     return parse_double(response, "measureVoltage");
 }
 
 void Agilent66xxA::setCurrent(double current) {
-    executeCommand(getSpec("set_current"), current);
+    executeWrite(getSpec("set_current"), current);
 }
 
 double Agilent66xxA::getCurrentSetting() {
-    std::string response = executeCommand(getSpec("get_current_set"));
+    std::string response = executeQuery(getSpec("get_current_set"));
     return parse_double(response, "getCurrentSetting");
 }
 
 double Agilent66xxA::measureCurrent() {
-    std::string response = executeCommand(getSpec("meas_current"));
+    // Pass the required 50ms delay for an ADC measurement to the executeQuery helper.
+    std::string response = executeQuery(getSpec("meas_current"), 50);
     return parse_double(response, "measureCurrent");
 }
 
 void Agilent66xxA::setOutput(bool enabled) {
-    executeCommand(getSpec("set_output"), enabled ? "ON" : "OFF");
+    executeWrite(getSpec("set_output"), enabled ? "ON" : "OFF");
 }
 
 bool Agilent66xxA::isOutputEnabled() {
-    std::string response = executeCommand(getSpec("get_output_state"));
+    std::string response = executeQuery(getSpec("get_output_state"));
     return response.find('1') != std::string::npos;
 }
 
