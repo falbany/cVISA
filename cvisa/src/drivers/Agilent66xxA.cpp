@@ -6,23 +6,32 @@ namespace cvisa {
 namespace drivers {
 
 // --- Data-driven Command Definitions ---
-// The static registry is defined here. It maps a logical name to a specific
-// SCPI command string and its type (WRITE or QUERY). This separates the
-// command "data" from the execution "logic".
+// The command registry remains defined here, specific to this driver.
+// The format specifiers are now standard C-style for snprintf.
 const std::map<std::string, CommandSpec> Agilent66xxA::s_commandRegistry = {
-    {"set_voltage",     {"VOLT {}",     CommandType::WRITE}},
+    {"set_voltage",     {"VOLT %f",    CommandType::WRITE}},
     {"get_voltage_set", {"VOLT?",      CommandType::QUERY}},
     {"meas_voltage",    {"MEAS:VOLT?", CommandType::QUERY}},
-    {"set_current",     {"CURR {}",     CommandType::WRITE}},
+    {"set_current",     {"CURR %f",    CommandType::WRITE}},
     {"get_current_set", {"CURR?",      CommandType::QUERY}},
     {"meas_current",    {"MEAS:CURR?", CommandType::QUERY}},
-    {"set_output",      {"OUTP {}",     CommandType::WRITE}},
+    {"set_output",      {"OUTP %s",    CommandType::WRITE}},
     {"get_output_state",{"OUTP?",      CommandType::QUERY}}
 };
 
 // --- Constructor ---
 Agilent66xxA::Agilent66xxA(VisaInstrument& instrument)
     : InstrumentDriver(instrument) {}
+
+// --- Private Spec Lookup Helper ---
+// Finds the command specification in the registry. Throws if not found.
+const CommandSpec& Agilent66xxA::getSpec(const std::string& commandName) const {
+    auto it = s_commandRegistry.find(commandName);
+    if (it == s_commandRegistry.end()) {
+        throw std::invalid_argument("Command not found in registry: " + commandName);
+    }
+    return it->second;
+}
 
 // --- Helper for parsing string responses to double ---
 namespace {
@@ -35,76 +44,44 @@ double parse_double(const std::string& response, const std::string& context) {
 }
 } // namespace
 
-// --- Private Command Execution Logic ---
-// This templated helper function is the engine for our data-driven approach.
-// It finds a command in the registry, formats it with arguments, and executes it.
-template<typename... Args>
-std::string Agilent66xxA::executeCommand(const std::string& commandName, Args... args) {
-    // Find command in the static registry
-    auto it = s_commandRegistry.find(commandName);
-    if (it == s_commandRegistry.end()) {
-        throw std::invalid_argument("Command not found in registry: " + commandName);
-    }
-    const auto& spec = it->second;
-
-    // Use a C-style buffer for robust formatting
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer), spec.command, args...);
-    std::string final_command = buffer;
-
-    // Execute the command based on its defined type
-    if (spec.type == CommandType::WRITE) {
-        m_instrument.write(final_command);
-        return ""; // Return an empty string for write commands
-    }
-    if (spec.type == CommandType::QUERY) {
-        return m_instrument.query(final_command);
-    }
-
-    // This part should be unreachable if the command types are correct
-    throw std::logic_error("Unknown command type in registry for command: " + commandName);
-}
-
-
 // --- Refactored Public API ---
-// The public methods are now clean, readable one-liners that delegate all
-// the work to the command execution engine. This makes the driver's intent
-// clear and easy to maintain.
+// Public methods now look up the command spec and pass it to the base class's
+// executeCommand method. The logic is cleaner and avoids code duplication.
 
 void Agilent66xxA::setVoltage(double voltage) {
-    // The format string in the registry is "VOLT {}", which snprintf understands
-    // as expecting a single argument.
-    executeCommand("set_voltage", voltage);
+    executeCommand(getSpec("set_voltage"), voltage);
 }
 
 double Agilent66xxA::getVoltageSetting() {
-    return parse_double(executeCommand("get_voltage_set"), "getVoltageSetting");
+    std::string response = executeCommand(getSpec("get_voltage_set"));
+    return parse_double(response, "getVoltageSetting");
 }
 
 double Agilent66xxA::measureVoltage() {
-    return parse_double(executeCommand("meas_voltage"), "measureVoltage");
+    std::string response = executeCommand(getSpec("meas_voltage"));
+    return parse_double(response, "measureVoltage");
 }
 
 void Agilent66xxA::setCurrent(double current) {
-    executeCommand("set_current", current);
+    executeCommand(getSpec("set_current"), current);
 }
 
 double Agilent66xxA::getCurrentSetting() {
-    return parse_double(executeCommand("get_current_set"), "getCurrentSetting");
+    std::string response = executeCommand(getSpec("get_current_set"));
+    return parse_double(response, "getCurrentSetting");
 }
 
 double Agilent66xxA::measureCurrent() {
-    return parse_double(executeCommand("meas_current"), "measureCurrent");
+    std::string response = executeCommand(getSpec("meas_current"));
+    return parse_double(response, "measureCurrent");
 }
 
 void Agilent66xxA::setOutput(bool enabled) {
-    // For boolean commands, we pass the required string "ON" or "OFF"
-    executeCommand("set_output", enabled ? "ON" : "OFF");
+    executeCommand(getSpec("set_output"), enabled ? "ON" : "OFF");
 }
 
 bool Agilent66xxA::isOutputEnabled() {
-    std::string response = executeCommand("get_output_state");
-    // The 66xxA series returns "1" for ON and "0" for OFF.
+    std::string response = executeCommand(getSpec("get_output_state"));
     return response.find('1') != std::string::npos;
 }
 
