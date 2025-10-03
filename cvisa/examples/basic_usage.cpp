@@ -1,11 +1,12 @@
 #include <iostream>
 #include <string>
-#include <iomanip> // For std::fixed and std::setprecision
-#include <thread>  // For std::this_thread::sleep_for
-#include <chrono>  // For std::chrono::milliseconds
+#include <vector>
+#include <iomanip>
+#include <thread>
+#include <chrono>
 
 // Core VISA wrapper includes
-#include "VisaInterface.hpp" // Changed from VisaInstrument.hpp
+#include "VisaInterface.hpp"
 #include "exceptions.hpp"
 
 // Include the specific Agilent 66xxA instrument driver
@@ -16,51 +17,55 @@ void print_separator() {
 }
 
 int main() {
-    // --- IMPORTANT ---
-    // Replace this with the VISA resource string of your Agilent 66xxA power supply.
-    const std::string resource_address = "GPIB0::5::INSTR"; // Example for a GPIB-connected instrument
-
-    std::cout << "Attempting to connect to Agilent 66xxA at: " << resource_address << std::endl;
-
     try {
-        // --- 1. Establish the low-level VISA connection ---
-        // The object is now more accurately named `VisaInterface`.
+        // --- 1. Discover connected VISA instruments ---
+        std::cout << "Finding connected VISA instruments..." << std::endl;
+        const auto resources = cvisa::VisaInterface::findResources();
+
+        if (resources.empty()) {
+            std::cerr << "No VISA instruments found. Please check connections and VISA installation." << std::endl;
+            return 1;
+        }
+
+        std::cout << "Found " << resources.size() << " instrument(s):" << std::endl;
+        for (const auto& resource : resources) {
+            std::cout << "  - " << resource << std::endl;
+        }
+        print_separator();
+
+        // --- 2. Connect to the first discovered instrument ---
+        const std::string resource_address = resources[0];
+        std::cout << "Attempting to connect to: " << resource_address << std::endl;
+
         cvisa::VisaInterface interface(resource_address, 5000, '\n');
         std::cout << "Low-level VISA connection successful." << std::endl;
         print_separator();
 
-        // --- 2. Instantiate the specific high-level driver ---
-        // Pass the connected `VisaInterface` object to the driver's constructor.
+        // --- 3. Instantiate the specific high-level driver ---
         cvisa::drivers::Agilent66xxA psu(interface);
         std::cout << "Agilent 66xxA driver initialized." << std::endl;
 
-        // Use a low-level command via the interface object to get the ID.
         std::string idn = interface.getIdentification();
         std::cout << "Instrument ID: " << idn << std::endl;
         print_separator();
 
-        // --- 3. Use the driver's specific, high-level methods ---
+        // --- 4. Use the driver's specific, high-level methods ---
         std::cout << "Configuring power supply..." << std::endl;
-        psu.setVoltage(12.0); // Set output to 12.0 Volts
-        psu.setCurrent(1.0);  // Set current limit to 1.0 Amp
+        psu.setVoltage(12.0);
+        psu.setCurrent(1.0);
 
-        // Query the settings to confirm they were received by the instrument
         double v_set = psu.getVoltageSetting();
         double i_set = psu.getCurrentSetting();
         std::cout << std::fixed << std::setprecision(3);
         std::cout << "-> Voltage setting confirmed: " << v_set << " V" << std::endl;
         std::cout << "-> Current limit confirmed: " << i_set << " A" << std::endl;
 
-        psu.setOutput(true); // Turn the output on
+        psu.setOutput(true);
         std::cout << "-> Output enabled." << std::endl;
         print_separator();
 
-        // --- 4. Read back measured values from the instrument ---
-        // This demonstrates the key advantage of a specific driver:
-        // distinguishing between a setting (VOLT?) and a real measurement (MEAS:VOLT?).
+        // --- 5. Read back measured values ---
         std::cout << "Reading back measured values..." << std::endl;
-
-        // Add a small delay for the instrument to stabilize its readings
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
         std::cout << std::fixed << std::setprecision(4);
@@ -69,17 +74,11 @@ int main() {
         std::cout << "Is output enabled? " << (psu.isOutputEnabled() ? "Yes" : "No") << std::endl;
         print_separator();
 
-        // --- 5. Clean up ---
+        // --- 6. Clean up ---
         std::cout << "Disabling output." << std::endl;
         psu.setOutput(false);
         std::cout << "Is output enabled? " << (psu.isOutputEnabled() ? "Yes" : "No") << std::endl;
 
-    } catch (const cvisa::ConnectionException& e) {
-        std::cerr << "[Connection Error] " << e.what() << std::endl;
-        return 1;
-    } catch (const cvisa::CommandException& e) {
-        std::cerr << "[Command Error] " << e.what() << std::endl;
-        return 1;
     } catch (const cvisa::VisaException& e) {
         std::cerr << "[VISA Error] " << e.what() << std::endl;
         return 1;

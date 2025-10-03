@@ -200,6 +200,49 @@ void VisaInterface::setWriteTermination(char term_char) {
     checkStatus(status, "viSetAttribute (VI_ATTR_SEND_END_EN for Write)");
 }
 
+// --- Static Utilities ---
+
+std::vector<std::string> VisaInterface::findResources(const std::string& query) {
+    ViSession rmSession = VI_NULL;
+    ViStatus status = viOpenDefaultRM(&rmSession);
+    if (status < VI_SUCCESS) {
+        throw VisaException("Could not open VISA Default Resource Manager to find resources.");
+    }
+
+    ViFindList findList;
+    ViUInt32 returnCount = 0;
+    char instrumentDescription[VI_FIND_BUFLEN];
+    std::vector<std::string> resources;
+
+    status = viFindRsrc(rmSession, const_cast<char*>(query.c_str()), &findList, &returnCount, instrumentDescription);
+
+    if (status < VI_SUCCESS) {
+        viClose(rmSession);
+        // VI_ERROR_RSRC_NFOUND is a normal condition if no instruments are found.
+        if (status == VI_ERROR_RSRC_NFOUND) {
+            return {}; // Return an empty list, not an error.
+        }
+        throw VisaException("Failed to find VISA resources.");
+    }
+
+    resources.push_back(instrumentDescription);
+
+    for (ViUInt32 i = 1; i < returnCount; ++i) {
+        status = viFindNext(findList, instrumentDescription);
+        if (status < VI_SUCCESS) {
+            // Clean up and ignore errors on findNext, just stop searching.
+            break;
+        }
+        resources.push_back(instrumentDescription);
+    }
+
+    // Clean up the find list and the resource manager session
+    viClose(findList);
+    viClose(rmSession);
+
+    return resources;
+}
+
 // --- Private Helper ---
 
 void VisaInterface::checkStatus(ViStatus status, const std::string& functionName) {

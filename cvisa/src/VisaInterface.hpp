@@ -69,6 +69,16 @@ public:
     void setReadTermination(char term_char, bool enable = true);
     void setWriteTermination(char term_char);
 
+    // --- Static Utilities ---
+    /**
+     * @brief Discovers connected VISA resources on the system.
+     * @param query A filter string to find specific resources. "?*INSTR" finds
+     *              most common instruments.
+     * @return A vector of strings, where each string is a VISA resource address.
+     * @throws VisaException if the resource manager cannot be opened.
+     */
+    static std::vector<std::string> findResources(const std::string& query = "?*INSTR");
+
 private:
     void checkStatus(ViStatus status, const std::string& functionName);
     void closeConnection();
