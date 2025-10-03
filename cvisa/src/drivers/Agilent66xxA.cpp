@@ -19,8 +19,8 @@ const std::map<std::string, CommandSpec> Agilent66xxA::s_commandRegistry = {
 };
 
 // --- Constructor ---
-Agilent66xxA::Agilent66xxA(VisaInstrument& instrument)
-    : InstrumentDriver(instrument) {}
+Agilent66xxA::Agilent66xxA(VisaInterface& interface)
+    : InstrumentDriver(interface) {}
 
 // --- Private Spec Lookup Helper ---
 const CommandSpec& Agilent66xxA::getSpec(const std::string& commandName) const {

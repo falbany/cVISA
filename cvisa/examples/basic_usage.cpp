@@ -5,10 +5,10 @@
 #include <chrono>  // For std::chrono::milliseconds
 
 // Core VISA wrapper includes
-#include "VisaInstrument.hpp"
+#include "VisaInterface.hpp" // Changed from VisaInstrument.hpp
 #include "exceptions.hpp"
 
-// NEW: Include the specific Agilent 66xxA instrument driver
+// Include the specific Agilent 66xxA instrument driver
 #include "drivers/Agilent66xxA.hpp"
 
 void print_separator() {
@@ -24,17 +24,18 @@ int main() {
 
     try {
         // --- 1. Establish the low-level VISA connection ---
-        cvisa::VisaInstrument instrument(resource_address, 5000, '\n');
+        // The object is now more accurately named `VisaInterface`.
+        cvisa::VisaInterface interface(resource_address, 5000, '\n');
         std::cout << "Low-level VISA connection successful." << std::endl;
         print_separator();
 
         // --- 2. Instantiate the specific high-level driver ---
-        // We now use the Agilent66xxA driver for hardware-specific control.
-        cvisa::drivers::Agilent66xxA psu(instrument);
+        // Pass the connected `VisaInterface` object to the driver's constructor.
+        cvisa::drivers::Agilent66xxA psu(interface);
         std::cout << "Agilent 66xxA driver initialized." << std::endl;
 
-        // Use a low-level command via the base class to get the ID
-        std::string idn = instrument.getIdentification();
+        // Use a low-level command via the interface object to get the ID.
+        std::string idn = interface.getIdentification();
         std::cout << "Instrument ID: " << idn << std::endl;
         print_separator();
 

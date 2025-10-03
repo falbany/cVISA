@@ -14,7 +14,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # --- Build the cvisa Library ---
 # Create a static library target from the source files.
 add_library(cvisa
-    src/VisaInstrument.cpp
+    src/VisaInterface.cpp
     src/exceptions.cpp
     src/drivers/PowerSupply.cpp
     src/drivers/Agilent66xxA.cpp

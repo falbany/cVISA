@@ -19,9 +19,9 @@ class PowerSupply : public InstrumentDriver {
 public:
     /**
      * @brief Constructs the PowerSupply driver.
-     * @param instrument A connected VisaInstrument object.
+     * @param interface A connected VisaInterface object.
      */
-    explicit PowerSupply(VisaInstrument& instrument);
+    explicit PowerSupply(VisaInterface& interface);
 
     /**
      * @brief Sets the output voltage.

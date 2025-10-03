@@ -1,7 +1,7 @@
 #ifndef CVISA_INSTRUMENT_DRIVER_HPP
 #define CVISA_INSTRUMENT_DRIVER_HPP
 
-#include "VisaInstrument.hpp"
+#include "VisaInterface.hpp" // Changed from VisaInstrument.hpp
 #include "Command.hpp"
 #include <string>
 #include <stdexcept>
@@ -14,12 +14,14 @@ namespace drivers {
  * @brief An abstract base class for creating instrument-specific drivers.
  *
  * This class provides protected helper functions (`executeWrite`, `executeQuery`)
- * to centralize the logic for formatting and executing SCPI commands.
+ * to centralize the logic for formatting and executing SCPI commands via the
+ * underlying VisaInterface.
  */
 class InstrumentDriver {
 public:
-    explicit InstrumentDriver(VisaInstrument& instrument)
-        : m_instrument(instrument) {}
+    // Constructor now takes a VisaInterface reference
+    explicit InstrumentDriver(VisaInterface& interface)
+        : m_interface(interface) {}
 
     virtual ~InstrumentDriver() = default;
 
@@ -39,7 +41,7 @@ protected:
         }
         char buffer[256];
         snprintf(buffer, sizeof(buffer), spec.command, args...);
-        m_instrument.write(buffer);
+        m_interface.write(buffer); // Use m_interface
     }
 
     /**
@@ -52,7 +54,7 @@ protected:
         }
         char buffer[256];
         snprintf(buffer, sizeof(buffer), spec.command, args...);
-        return m_instrument.query(buffer, 2048, delay_ms);
+        return m_interface.query(buffer, 2048, delay_ms); // Use m_interface
     }
 
     // Overload for queries that don't require formatting or delays
@@ -60,11 +62,11 @@ protected:
         if (spec.type != CommandType::QUERY) {
             throw std::logic_error("Attempted to call executeQuery on a WRITE command.");
         }
-        return m_instrument.query(spec.command);
+        return m_interface.query(spec.command); // Use m_interface
     }
 
-
-    VisaInstrument& m_instrument;
+    // Renamed from m_instrument to m_interface for clarity
+    VisaInterface& m_interface;
 };
 
 } // namespace drivers

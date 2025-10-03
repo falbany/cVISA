@@ -1,21 +1,19 @@
-#include "VisaInstrument.hpp"
+#include "VisaInterface.hpp"
 #include "exceptions.hpp"
 
-#include <visa.h> // The actual VISA C API header
+#include <visa.h>
 #include <vector>
-#include <utility> // For std::swap
-#include <thread>  // For std::this_thread::sleep_for
-#include <chrono>  // For std::chrono::milliseconds
-#include <string>  // For std::stoi, std::to_string
-#include <algorithm> // For trim function
+#include <utility>
+#include <thread>
+#include <chrono>
+#include <string>
+#include <algorithm>
 
 namespace {
-// Helper to trim leading/trailing whitespace, making string parsing more robust.
+// Helper to trim leading/trailing whitespace
 std::string trim(const std::string& s) {
     auto start = s.find_first_not_of(" \t\n\r\f\v");
-    if (start == std::string::npos) {
-        return ""; // String is all whitespace
-    }
+    if (start == std::string::npos) return "";
     auto end = s.find_last_not_of(" \t\n\r\f\v");
     return s.substr(start, (end - start + 1));
 }
@@ -25,7 +23,7 @@ namespace cvisa {
 
 // --- Constructor and Destructor ---
 
-VisaInstrument::VisaInstrument(const std::string& resourceName,
+VisaInterface::VisaInterface(const std::string& resourceName,
                                std::optional<unsigned int> timeout_ms,
                                std::optional<char> read_termination,
                                std::optional<char> write_termination) {
@@ -36,28 +34,20 @@ VisaInstrument::VisaInstrument(const std::string& resourceName,
 
     status = viOpen(m_resourceManagerHandle, const_cast<char*>(resourceName.c_str()), VI_NULL, VI_NULL, &m_instrumentHandle);
     if (status < VI_SUCCESS) {
-        viClose(m_resourceManagerHandle); // Clean up RM handle before throwing
+        viClose(m_resourceManagerHandle);
         throw ConnectionException("Failed to connect to instrument: " + resourceName);
     }
 
-    // Apply optional settings now that the connection is established
-    if (timeout_ms) {
-        setTimeout(*timeout_ms);
-    }
-    if (read_termination) {
-        setReadTermination(*read_termination);
-    }
-    if (write_termination) {
-        setWriteTermination(*write_termination);
-    }
+    if (timeout_ms) setTimeout(*timeout_ms);
+    if (read_termination) setReadTermination(*read_termination);
+    if (write_termination) setWriteTermination(*write_termination);
 }
 
-VisaInstrument::~VisaInstrument() {
+VisaInterface::~VisaInterface() {
     closeConnection();
 }
 
-void VisaInstrument::closeConnection() {
-    // Destructors must not throw. We call viClose but don't check the status.
+void VisaInterface::closeConnection() {
     if (m_instrumentHandle != VI_NULL) {
         viClose(m_instrumentHandle);
         m_instrumentHandle = VI_NULL;
@@ -68,17 +58,16 @@ void VisaInstrument::closeConnection() {
     }
 }
 
-
 // --- Move Semantics ---
 
-VisaInstrument::VisaInstrument(VisaInstrument&& other) noexcept {
+VisaInterface::VisaInterface(VisaInterface&& other) noexcept {
     m_resourceManagerHandle = other.m_resourceManagerHandle;
     m_instrumentHandle = other.m_instrumentHandle;
     other.m_resourceManagerHandle = VI_NULL;
     other.m_instrumentHandle = VI_NULL;
 }
 
-VisaInstrument& VisaInstrument::operator=(VisaInstrument&& other) noexcept {
+VisaInterface& VisaInterface::operator=(VisaInterface&& other) noexcept {
     if (this != &other) {
         closeConnection();
         m_resourceManagerHandle = other.m_resourceManagerHandle;
@@ -89,16 +78,15 @@ VisaInstrument& VisaInstrument::operator=(VisaInstrument&& other) noexcept {
     return *this;
 }
 
-
 // --- Core I/O Operations ---
 
-void VisaInstrument::write(const std::string& command) {
+void VisaInterface::write(const std::string& command) {
     ViUInt32 returnCount = 0;
     ViStatus status = viWrite(m_instrumentHandle, (unsigned char*)command.c_str(), static_cast<ViUInt32>(command.length()), &returnCount);
     checkStatus(status, "viWrite");
 }
 
-std::string VisaInstrument::read(size_t bufferSize) {
+std::string VisaInterface::read(size_t bufferSize) {
     std::vector<char> buffer(bufferSize);
     ViUInt32 returnCount = 0;
     ViStatus status = viRead(m_instrumentHandle, (unsigned char*)buffer.data(), static_cast<ViUInt32>(buffer.size()), &returnCount);
@@ -106,7 +94,7 @@ std::string VisaInstrument::read(size_t bufferSize) {
     return std::string(buffer.data(), returnCount);
 }
 
-std::string VisaInstrument::query(const std::string& command, size_t bufferSize, unsigned int delay_ms) {
+std::string VisaInterface::query(const std::string& command, size_t bufferSize, unsigned int delay_ms) {
     write(command);
     if (delay_ms > 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
@@ -114,30 +102,29 @@ std::string VisaInstrument::query(const std::string& command, size_t bufferSize,
     return read(bufferSize);
 }
 
-
 // --- SCPI Convenience Methods ---
 
-std::string VisaInstrument::getIdentification(const std::string& cmd) {
+std::string VisaInterface::getIdentification(const std::string& cmd) {
     return trim(query(cmd));
 }
 
-void VisaInstrument::reset(const std::string& cmd) {
+void VisaInterface::reset(const std::string& cmd) {
     write(cmd);
 }
 
-void VisaInstrument::clearStatus(const std::string& cmd) {
+void VisaInterface::clearStatus(const std::string& cmd) {
     write(cmd);
 }
 
-void VisaInstrument::waitToContinue(const std::string& cmd) {
+void VisaInterface::waitToContinue(const std::string& cmd) {
     write(cmd);
 }
 
-bool VisaInstrument::isOperationComplete(const std::string& cmd) {
+bool VisaInterface::isOperationComplete(const std::string& cmd) {
     return trim(query(cmd)) == "1";
 }
 
-int VisaInstrument::runSelfTest(const std::string& cmd) {
+int VisaInterface::runSelfTest(const std::string& cmd) {
     std::string response = trim(query(cmd));
     try {
         return std::stoi(response);
@@ -146,7 +133,7 @@ int VisaInstrument::runSelfTest(const std::string& cmd) {
     }
 }
 
-uint8_t VisaInstrument::getStatusByte(const std::string& cmd) {
+uint8_t VisaInterface::getStatusByte(const std::string& cmd) {
     std::string response = trim(query(cmd));
     try {
         return static_cast<uint8_t>(std::stoi(response));
@@ -155,7 +142,7 @@ uint8_t VisaInstrument::getStatusByte(const std::string& cmd) {
     }
 }
 
-uint8_t VisaInstrument::getEventStatusRegister(const std::string& cmd) {
+uint8_t VisaInterface::getEventStatusRegister(const std::string& cmd) {
     std::string response = trim(query(cmd));
     try {
         return static_cast<uint8_t>(std::stoi(response));
@@ -164,11 +151,11 @@ uint8_t VisaInstrument::getEventStatusRegister(const std::string& cmd) {
     }
 }
 
-void VisaInstrument::setEventStatusEnable(uint8_t mask, const std::string& cmd_prefix) {
+void VisaInterface::setEventStatusEnable(uint8_t mask, const std::string& cmd_prefix) {
     write(cmd_prefix + " " + std::to_string(mask));
 }
 
-uint8_t VisaInstrument::getEventStatusEnable(const std::string& cmd) {
+uint8_t VisaInterface::getEventStatusEnable(const std::string& cmd) {
     std::string response = trim(query(cmd));
     try {
         return static_cast<uint8_t>(std::stoi(response));
@@ -177,11 +164,11 @@ uint8_t VisaInstrument::getEventStatusEnable(const std::string& cmd) {
     }
 }
 
-void VisaInstrument::setServiceRequestEnable(uint8_t mask, const std::string& cmd_prefix) {
+void VisaInterface::setServiceRequestEnable(uint8_t mask, const std::string& cmd_prefix) {
     write(cmd_prefix + " " + std::to_string(mask));
 }
 
-uint8_t VisaInstrument::getServiceRequestEnable(const std::string& cmd) {
+uint8_t VisaInterface::getServiceRequestEnable(const std::string& cmd) {
     std::string response = trim(query(cmd));
     try {
         return static_cast<uint8_t>(std::stoi(response));
@@ -190,44 +177,37 @@ uint8_t VisaInstrument::getServiceRequestEnable(const std::string& cmd) {
     }
 }
 
-
 // --- Configuration ---
 
-void VisaInstrument::setTimeout(unsigned int timeout_ms) {
+void VisaInterface::setTimeout(unsigned int timeout_ms) {
     ViStatus status = viSetAttribute(m_instrumentHandle, VI_ATTR_TMO_VALUE, timeout_ms);
     checkStatus(status, "viSetAttribute (Timeout)");
 }
 
-void VisaInstrument::setReadTermination(char term_char, bool enable) {
+void VisaInterface::setReadTermination(char term_char, bool enable) {
     ViStatus status;
     status = viSetAttribute(m_instrumentHandle, VI_ATTR_TERMCHAR, static_cast<ViInt8>(term_char));
     checkStatus(status, "viSetAttribute (VI_ATTR_TERMCHAR for Read)");
-
     status = viSetAttribute(m_instrumentHandle, VI_ATTR_TERMCHAR_EN, enable ? VI_TRUE : VI_FALSE);
     checkStatus(status, "viSetAttribute (VI_ATTR_TERMCHAR_EN for Read)");
 }
 
-void VisaInstrument::setWriteTermination(char term_char) {
+void VisaInterface::setWriteTermination(char term_char) {
     ViStatus status;
     status = viSetAttribute(m_instrumentHandle, VI_ATTR_TERMCHAR, static_cast<ViInt8>(term_char));
     checkStatus(status, "viSetAttribute (VI_ATTR_TERMCHAR for Write)");
-
     status = viSetAttribute(m_instrumentHandle, VI_ATTR_SEND_END_EN, VI_TRUE);
     checkStatus(status, "viSetAttribute (VI_ATTR_SEND_END_EN for Write)");
 }
 
-
 // --- Private Helper ---
 
-void VisaInstrument::checkStatus(ViStatus status, const std::string& functionName) {
+void VisaInterface::checkStatus(ViStatus status, const std::string& functionName) {
     if (status < VI_SUCCESS) {
         char errorBuffer[256] = {0};
-        // Use the resource manager handle to get error descriptions, as it's more reliable.
         viStatusDesc(m_resourceManagerHandle, status, errorBuffer);
-
         std::string errorMessage = "VISA Error in " + functionName + ": " + errorBuffer + " (Status: " + std::to_string(status) + ")";
-
-        if (status == VI_ERROR_TMO) { // Timeout is a command error
+        if (status == VI_ERROR_TMO) {
              throw CommandException(errorMessage);
         }
         if (status == VI_ERROR_RSRC_NFOUND || status == VI_ERROR_RSRC_LOCKED || status == VI_ERROR_CONN_LOST) {
