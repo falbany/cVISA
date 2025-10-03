@@ -16,6 +16,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(cvisa
     src/VisaInstrument.cpp
     src/exceptions.cpp
+    src/drivers/PowerSupply.cpp
 )
 
 # Make the 'src' directory publicly available for includes.
