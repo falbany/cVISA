@@ -17,6 +17,7 @@ add_library(cvisa
     src/VisaInstrument.cpp
     src/exceptions.cpp
     src/drivers/PowerSupply.cpp
+    src/drivers/Agilent66xxA.cpp
 )
 
 # Make the 'src' directory publicly available for includes.
