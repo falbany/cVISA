@@ -1,32 +1,32 @@
 # cvisa: A Modern C++ VISA Wrapper Library
 
-`cvisa` is a simple, professional C++ library providing a rich, object-oriented wrapper for the VISA C API. It is designed to make communication with SCPI-based lab instruments intuitive, safe, and robust. The library promotes modern C++ practices, including RAII for resource management, a decoupled architecture for testability, and a clean, data-driven approach to instrument control.
+`cvisa` is a simple, professional C++ library providing a rich, object-oriented wrapper for the VISA C API. It is designed to make communication with SCPI-based lab instruments intuitive, safe, and robust. The library promotes modern C++ practices, including RAII for resource management, a straightforward inheritance model for creating drivers, and a clean, data-driven approach to instrument control.
 
 ## Key Features
 
-*   **Decoupled & Testable Architecture:** The library uses an abstract interface (`IVisaIo`) to separate the high-level instrument drivers from the low-level communication layer. This allows for easy unit testing with mock I/O objects.
+*   **Simple Inheritance Model:** High-level drivers inherit directly from the core communication class, making the API intuitive and easy to use. Create a fully functional driver object in a single line.
 *   **Asynchronous Operations:** Perform non-blocking queries using `std::future` for building responsive applications that don't get stuck waiting for slow instruments.
-*   **Object-Oriented & RAII-Compliant:** Manages VISA sessions automatically within the `VisaInterface` class constructor and destructor. No more manual `viOpen` or `viClose` calls.
+*   **Object-Oriented & RAII-Compliant:** Manages VISA sessions automatically. The driver's constructor and destructor handle `viOpen` and `viClose`, preventing resource leaks.
 *   **Exception Safety:** All VISA function calls are checked, and descriptive exceptions are thrown on failure, preventing silent errors.
-*   **Declarative, Data-Driven Drivers:** Implement instrument-specific drivers by defining their SCPI command sets as simple data, separating the "what" from the "how" and making drivers easy to read and maintain.
+*   **Declarative, Data-Driven Drivers:** Implement instrument-specific drivers by defining their SCPI command sets as simple data, separating the "what" from the "how."
 *   **Reusable Abstraction Layer:** A clean `InstrumentDriver` base class with a shared command execution engine makes creating new, high-level instrument drivers trivial.
 *   **Modern Build System:** Uses CMake for easy integration into cross-platform projects.
 *   **No External Dependencies:** Besides a VISA SDK (like NI-VISA, Keysight VISA, etc.), the library is self-contained.
 
-## Architecture: Decoupled and Testable
+## Architecture: Simple and Extensible
 
-The `cvisa` library is built on a decoupled, two-layer architecture that prioritizes modularity and testability.
+The `cvisa` library is built on a simple and powerful inheritance-based architecture.
 
-1.  **The I/O Abstraction Layer (`IVisaIo.hpp`):**
-    This is a pure abstract class that defines the contract for all VISA communication. It specifies the core I/O functions (`write`, `query`, `queryAsync`, etc.) that any communication class must implement.
+1.  **`VisaInterface` (The Base Communication Layer):**
+    This is the foundational class that directly wraps the VISA C API. It handles the low-level details of opening and closing sessions, writing commands, and reading responses.
 
-2.  **The Concrete Implementation (`VisaInterface.hpp`):**
-    This class is the standard, concrete implementation of the `IVisaIo` interface. It handles the low-level details of talking to the VISA C API.
+2.  **`InstrumentDriver` (The Command Engine):**
+    This class inherits from `VisaInterface`, gaining all of its I/O capabilities. It enhances the base layer by adding a powerful, data-driven command execution engine and implementations for all the common SCPI commands (`*IDN?`, `*RST`, etc.).
 
-3.  **The Driver Base Class (`InstrumentDriver.hpp`):**
-    This is the base class for all high-level instrument drivers. Critically, it **depends on the `IVisaIo` interface, not the concrete `VisaInterface` class**.
+3.  **Specific Drivers (e.g., `Agilent66xxA`):**
+    A specific driver, like one for an Agilent power supply, inherits from `InstrumentDriver`. This gives it the full VISA I/O and command engine functionality. The only responsibility of a specific driver is to define its unique command set in a static map and provide public methods that are meaningful for that instrument (e.g., `setVoltage()`).
 
-This separation means you can write instrument drivers that are completely independent of the actual VISA communication backend. For testing, you can create a "mock" I/O class that implements `IVisaIo` and pass it to your driver, allowing you to unit test your driver's logic without needing any real hardware.
+This design makes creating new drivers incredibly simple while promoting maximum code reuse.
 
 ## Project Structure
 
@@ -35,8 +35,7 @@ The project is organized to separate the core library, instrument-specific drive
 ```
 cvisa/
 ├── src/
-│   ├── IVisaIo.hpp             # The abstract I/O interface
-│   ├── VisaInterface.hpp       # Concrete VISA session wrapper
+│   ├── VisaInterface.hpp       # Base VISA session wrapper
 │   ├── VisaInterface.cpp
 │   ├── exceptions.hpp          # Custom exception classes
 │   ├── exceptions.cpp
@@ -65,7 +64,7 @@ mkdir build
 cd build
 cmake ..
 ```
-CMake will automatically try to find your installed VISA library. If it's in a non-standard location, you may need to provide a hint to CMake.
+CMake will automatically try to find your installed VISA library.
 
 **2. Compile the Code:**
 Run your platform's build tool.
@@ -81,38 +80,36 @@ This will build the `cvisa` static library and the `example_app` executable insi
 
 ## How to Use
 
-The recommended way to use `cvisa` is through the instrument driver pattern. First, establish a connection with `VisaInterface`, then pass it to a specific driver.
+Using `cvisa` is straightforward. Simply include the header for the specific instrument you want to control and instantiate it with the VISA resource string.
 
 ```cpp
 #include <iostream>
-#include "VisaInterface.hpp"
 #include "drivers/Agilent66xxA.hpp" // Include your specific driver
+#include "exceptions.hpp"
 
 int main() {
-    // --- IMPORTANT ---
     // Replace this with the VISA resource string of your instrument.
     const std::string resource_address = "GPIB0::5::INSTR";
 
     try {
-        // 1. Establish the low-level VISA connection
-        cvisa::VisaInterface interface(resource_address, 5000, '\n');
+        // 1. Instantiate the driver directly.
+        // This single line creates the object and opens the VISA session.
+        cvisa::drivers::Agilent66xxA psu(resource_address, 5000, '\n');
 
-        // 2. Instantiate the high-level driver, passing the I/O interface
-        cvisa::drivers::Agilent66xxA psu(interface);
-
-        // 3. Use the driver's clean, high-level methods
+        // 2. Use the driver's clean, high-level methods.
         std::cout << "Instrument ID: " << psu.getIdentification() << std::endl;
         std::cout << "Configuring power supply..." << std::endl;
         psu.setVoltage(12.0); // Sets voltage to 12.0 V
         psu.setCurrent(1.0);  // Sets current limit to 1.0 A
         psu.setOutput(true);  // Enables the output
 
-        // 4. Measure actual values from the instrument
+        // 3. Measure actual values from the instrument.
         std::cout << "Measured Voltage: " << psu.measureVoltage() << " V" << std::endl;
         std::cout << "Measured Current: " << psu.measureCurrent() << " A" << std::endl;
 
-        // 5. Clean up
+        // 4. Clean up.
         psu.setOutput(false);
+        std::cout << "Output disabled." << std::endl;
 
     } catch (const cvisa::VisaException& e) {
         std::cerr << "An error occurred: " << e.what() << std::endl;

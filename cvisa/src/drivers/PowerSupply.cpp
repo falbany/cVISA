@@ -16,10 +16,14 @@ const std::map<std::string, CommandSpec> PowerSupply::s_commandRegistry = {
     {"get_output",  {"OUTP?", CommandType::QUERY}}
 };
 
+#include <optional>
+
 // --- Constructor ---
-// Updated to accept the abstract IVisaIo interface.
-PowerSupply::PowerSupply(IVisaIo& interface)
-    : InstrumentDriver(interface) {}
+PowerSupply::PowerSupply(const std::string& resourceName,
+                         std::optional<unsigned int> timeout_ms,
+                         std::optional<char> read_termination,
+                         std::optional<char> write_termination)
+    : InstrumentDriver(resourceName, timeout_ms, read_termination, write_termination) {}
 
 // Helper to look up a command spec from the registry.
 const CommandSpec& PowerSupply::getSpec(const std::string& commandName) const {

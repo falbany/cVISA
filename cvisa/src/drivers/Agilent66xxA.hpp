@@ -17,9 +17,21 @@ namespace drivers {
  * command set in a static registry. It inherits its command execution logic
  * from the InstrumentDriver base class, promoting code reuse.
  */
+#include <optional>
+
 class Agilent66xxA : public InstrumentDriver {
 public:
-    explicit Agilent66xxA(IVisaIo& interface);
+    /**
+     * @brief Constructs the driver and opens a VISA session.
+     * @param resourceName The VISA resource string.
+     * @param timeout_ms Optional timeout in milliseconds.
+     * @param read_termination Optional read termination character.
+     * @param write_termination Optional write termination character.
+     */
+    explicit Agilent66xxA(const std::string& resourceName,
+                          std::optional<unsigned int> timeout_ms = std::nullopt,
+                          std::optional<char> read_termination = std::nullopt,
+                          std::optional<char> write_termination = std::nullopt);
 
     // --- Public API ---
     void setVoltage(double voltage);

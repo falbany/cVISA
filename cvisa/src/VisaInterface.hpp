@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
-#include "IVisaIo.hpp"
 #include <optional>
 #include <cstdint>
 #include <future>
@@ -17,14 +16,14 @@ namespace cvisa {
 
 /**
  * @class VisaInterface
- * @brief A C++ RAII wrapper for the VISA C API that implements the IVisaIo interface.
+ * @brief A C++ RAII wrapper for the VISA C API.
  *
  * This class encapsulates a VISA session, providing an object-oriented,
  * exception-safe interface to the underlying communication layer. It handles
- * resource management automatically and serves as the primary concrete
- * implementation of the IVisaIo contract.
+ * resource management automatically and serves as the base for all instrument
+ * communication.
  */
-class VisaInterface final : public IVisaIo {
+class VisaInterface {
 public:
     /**
      * @brief Constructs a VisaInterface object and opens a session.
@@ -39,7 +38,7 @@ public:
                            std::optional<char> read_termination = std::nullopt,
                            std::optional<char> write_termination = std::nullopt);
 
-    ~VisaInterface();
+    virtual ~VisaInterface();
 
     // --- Rule of Five: Move semantics enabled, copy semantics disabled ---
     VisaInterface(const VisaInterface&) = delete;
@@ -48,15 +47,15 @@ public:
     VisaInterface& operator=(VisaInterface&& other) noexcept;
 
     // --- Core I/O Operations ---
-    void write(const std::string& command) override;
-    std::string read(size_t bufferSize = 2048) override;
-    std::string query(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0) override;
-    std::future<std::string> queryAsync(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0) override;
+    virtual void write(const std::string& command);
+    virtual std::string read(size_t bufferSize = 2048);
+    virtual std::string query(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0);
+    virtual std::future<std::string> queryAsync(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0);
 
     // --- Configuration ---
-    void setTimeout(unsigned int timeout_ms) override;
-    void setReadTermination(char term_char, bool enable = true) override;
-    void setWriteTermination(char term_char) override;
+    virtual void setTimeout(unsigned int timeout_ms);
+    virtual void setReadTermination(char term_char, bool enable = true);
+    virtual void setWriteTermination(char term_char);
 
     // --- Static Utilities ---
     /**

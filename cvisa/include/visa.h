@@ -8,7 +8,7 @@ typedef unsigned int ViUInt32;
 typedef unsigned char ViUInt8;
 typedef short ViInt16;
 typedef char ViInt8;
-typedef ViSession ViFindList; // Corrected: ViFindList is a type of session handle
+typedef ViSession ViFindList; // ViFindList is a type of session handle
 
 // --- VISA Completion and Error Codes ---
 #define VI_SUCCESS                     (0L)

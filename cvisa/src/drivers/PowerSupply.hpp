@@ -17,13 +17,21 @@ namespace drivers {
  * InstrumentDriver base. It abstracts away the specific SCPI commands for
  * controlling a power supply into clean, readable methods.
  */
+#include <optional>
+
 class PowerSupply : public InstrumentDriver {
 public:
     /**
-     * @brief Constructs the PowerSupply driver.
-     * @param interface A connected I/O interface object.
+     * @brief Constructs the driver and opens a VISA session.
+     * @param resourceName The VISA resource string.
+     * @param timeout_ms Optional timeout in milliseconds.
+     * @param read_termination Optional read termination character.
+     * @param write_termination Optional write termination character.
      */
-    explicit PowerSupply(IVisaIo& interface);
+    explicit PowerSupply(const std::string& resourceName,
+                         std::optional<unsigned int> timeout_ms = std::nullopt,
+                         std::optional<char> read_termination = std::nullopt,
+                         std::optional<char> write_termination = std::nullopt);
 
     /**
      * @brief Sets the output voltage.

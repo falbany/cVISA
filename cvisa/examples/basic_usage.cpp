@@ -5,9 +5,16 @@
 #include <thread>
 #include <chrono>
 
-// Core VISA wrapper includes
-#include "VisaInterface.hpp"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <iomanip>
+#include <thread>
+#include <chrono>
+
+// Core cvisa includes
 #include "exceptions.hpp"
+#include "VisaInterface.hpp" // Needed for findResources
 
 // Include the specific Agilent 66xxA instrument driver
 #include "drivers/Agilent66xxA.hpp"
@@ -20,6 +27,7 @@ int main() {
     try {
         // --- 1. Discover connected VISA instruments ---
         std::cout << "Finding connected VISA instruments..." << std::endl;
+        // findResources is a static utility, so it's called on the base class.
         const auto resources = cvisa::VisaInterface::findResources();
 
         if (resources.empty()) {
@@ -33,19 +41,18 @@ int main() {
         }
         print_separator();
 
-        // --- 2. Connect to the first discovered instrument ---
+        // --- 2. Instantiate the driver for the first discovered instrument ---
         const std::string resource_address = resources[0];
-        std::cout << "Attempting to connect to: " << resource_address << std::endl;
+        std::cout << "Connecting to: " << resource_address << std::endl;
 
-        cvisa::VisaInterface interface(resource_address, 5000, '\n');
-        std::cout << "Low-level VISA connection successful." << std::endl;
+        // The driver is now instantiated directly with the resource string.
+        // This single step creates the object and opens the VISA session.
+        cvisa::drivers::Agilent66xxA psu(resource_address, 5000, '\n');
+        std::cout << "Driver initialized and connection successful." << std::endl;
         print_separator();
 
-        // --- 3. Instantiate the specific high-level driver ---
-        cvisa::drivers::Agilent66xxA psu(interface);
-        std::cout << "Agilent 66xxA driver initialized." << std::endl;
-
-        // Get the identification string via the high-level driver
+        // --- 3. Use the driver's high-level methods ---
+        // The driver object itself now handles all communication.
         std::string idn = psu.getIdentification();
         std::cout << "Instrument ID: " << idn << std::endl;
         print_separator();

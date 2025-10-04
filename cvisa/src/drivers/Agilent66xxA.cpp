@@ -19,10 +19,14 @@ const std::map<std::string, CommandSpec> Agilent66xxA::s_commandRegistry = {
     {"get_output_state",{"OUTP?",      CommandType::QUERY}}
 };
 
+#include <optional>
+
 // --- Constructor ---
-// Updated to accept the abstract IVisaIo interface.
-Agilent66xxA::Agilent66xxA(IVisaIo& interface)
-    : InstrumentDriver(interface) {}
+Agilent66xxA::Agilent66xxA(const std::string& resourceName,
+                           std::optional<unsigned int> timeout_ms,
+                           std::optional<char> read_termination,
+                           std::optional<char> write_termination)
+    : InstrumentDriver(resourceName, timeout_ms, read_termination, write_termination) {}
 
 // --- Private Spec Lookup Helper ---
 const CommandSpec& Agilent66xxA::getSpec(const std::string& commandName) const {
