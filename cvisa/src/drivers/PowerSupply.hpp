@@ -5,6 +5,7 @@
 #include "../Command.hpp"
 #include <string>
 #include <map>
+#include <optional>
 
 namespace cvisa {
 namespace drivers {
@@ -17,10 +18,13 @@ namespace drivers {
  * InstrumentDriver base. It abstracts away the specific SCPI commands for
  * controlling a power supply into clean, readable methods.
  */
-#include <optional>
-
 class PowerSupply : public InstrumentDriver {
 public:
+    /**
+     * @brief Default constructor. Creates a disconnected driver.
+     */
+    PowerSupply() = default;
+
     /**
      * @brief Constructs the driver and opens a VISA session.
      * @param resourceName The VISA resource string.

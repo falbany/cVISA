@@ -16,28 +16,20 @@ namespace cvisa {
 
 /**
  * @class VisaInterface
- * @brief A C++ RAII wrapper for the VISA C API.
+ * @brief A C++ RAII wrapper for the VISA C API with manual connection support.
  *
  * This class encapsulates a VISA session, providing an object-oriented,
- * exception-safe interface to the underlying communication layer. It handles
- * resource management automatically and serves as the base for all instrument
- * communication.
+ * exception-safe interface to the underlying communication layer. It supports
+ * both RAII-style (constructor-based) and manual connection management.
  */
 class VisaInterface {
 public:
-    /**
-     * @brief Constructs a VisaInterface object and opens a session.
-     * @param resourceName The VISA resource string (e.g., "TCPIP0::192.168.1.1::INSTR").
-     * @param timeout_ms Optional timeout in milliseconds.
-     * @param read_termination Optional read termination character.
-     * @param write_termination Optional write termination character.
-     * @throws ConnectionException if the connection fails.
-     */
+    // --- Constructors and Destructor ---
+    VisaInterface() = default;
     explicit VisaInterface(const std::string& resourceName,
                            std::optional<unsigned int> timeout_ms = std::nullopt,
                            std::optional<char> read_termination = std::nullopt,
                            std::optional<char> write_termination = std::nullopt);
-
     virtual ~VisaInterface();
 
     // --- Rule of Five: Move semantics enabled, copy semantics disabled ---
@@ -45,6 +37,12 @@ public:
     VisaInterface& operator=(const VisaInterface&) = delete;
     VisaInterface(VisaInterface&& other) noexcept;
     VisaInterface& operator=(VisaInterface&& other) noexcept;
+
+    // --- Manual Connection Management ---
+    void setRessource(const std::string& resourceName);
+    void connect();
+    void disconnect();
+    bool isConnected() const;
 
     // --- Core I/O Operations ---
     virtual void write(const std::string& command);
@@ -58,18 +56,15 @@ public:
     virtual void setWriteTermination(char term_char);
 
     // --- Static Utilities ---
-    /**
-     * @brief Discovers connected VISA resources on the system.
-     * @param query A filter string to find specific resources. "?*INSTR" finds
-     *              most common instruments.
-     * @return A vector of strings, where each string is a VISA resource address.
-     * @throws VisaException if the resource manager cannot be opened.
-     */
     static std::vector<std::string> findResources(const std::string& query = "?*INSTR");
 
 private:
     void checkStatus(ViStatus status, const std::string& functionName);
-    void closeConnection();
+
+    std::string m_resourceName;
+    std::optional<unsigned int> m_timeout_ms;
+    std::optional<char> m_read_termination;
+    std::optional<char> m_write_termination;
 
     ViSession m_resourceManagerHandle = 0;
     ViSession m_instrumentHandle = 0;

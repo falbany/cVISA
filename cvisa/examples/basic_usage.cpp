@@ -5,13 +5,6 @@
 #include <thread>
 #include <chrono>
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <iomanip>
-#include <thread>
-#include <chrono>
-
 // Core cvisa includes
 #include "exceptions.hpp"
 #include "VisaInterface.hpp" // Needed for findResources
@@ -23,11 +16,74 @@ void print_separator() {
     std::cout << "----------------------------------------" << std::endl;
 }
 
+/**
+ * @brief Demonstrates the simple, constructor-based (RAII) connection workflow.
+ */
+void run_raii_example(const std::string& resource_address) {
+    std::cout << "--- Running RAII (Constructor-based) Example ---" << std::endl;
+    // 1. Instantiate the driver directly with the resource string.
+    // This single step creates the object and opens the VISA session.
+    cvisa::drivers::Agilent66xxA psu(resource_address, 5000, '\n');
+    std::cout << "Driver initialized and connection successful." << std::endl;
+    print_separator();
+
+    // 2. Use the driver's high-level methods.
+    std::cout << "Instrument ID: " << psu.getIdentification() << std::endl;
+    print_separator();
+
+    // 3. Configure the power supply.
+    std::cout << "Configuring power supply..." << std::endl;
+    psu.setVoltage(5.0);
+    psu.setCurrent(0.5);
+    psu.setOutput(true);
+    std::cout << "-> Voltage set to " << psu.getVoltageSetting() << " V" << std::endl;
+    std::cout << "-> Current set to " << psu.getCurrentSetting() << " A" << std::endl;
+    std::cout << "-> Output enabled." << std::endl;
+    print_separator();
+
+    // 4. Clean up. The destructor will automatically disconnect when `psu` goes out of scope.
+    std::cout << "Disabling output." << std::endl;
+    psu.setOutput(false);
+    std::cout << "RAII example finished. Destructor will now disconnect." << std::endl;
+}
+
+/**
+ * @brief Demonstrates the manual connection workflow for more control.
+ */
+void run_manual_example(const std::string& resource_address) {
+    std::cout << "\n--- Running Manual Connection Example ---" << std::endl;
+    // 1. Create a disconnected driver instance using the default constructor.
+    cvisa::drivers::Agilent66xxA psu;
+    std::cout << "Driver created in a disconnected state." << std::endl;
+
+    // 2. Set the resource and configuration, then connect manually.
+    psu.setRessource(resource_address);
+    psu.setTimeout(5000);
+    psu.setReadTermination('\n');
+    std::cout << "Resource set to: " << resource_address << std::endl;
+
+    std::cout << "Attempting to connect manually..." << std::endl;
+    psu.connect();
+    std::cout << "Manual connection successful: " << std::boolalpha << psu.isConnected() << std::endl;
+    print_separator();
+
+    // 3. Use the driver's high-level methods.
+    std::cout << "Instrument ID: " << psu.getIdentification() << std::endl;
+    psu.setOutput(true);
+    std::cout << "Output enabled." << std::endl;
+    print_separator();
+
+    // 4. Manually disconnect from the instrument.
+    std::cout << "Attempting to disconnect manually..." << std::endl;
+    psu.disconnect();
+    std::cout << "Manual disconnection successful: " << std::boolalpha << !psu.isConnected() << std::endl;
+    std::cout << "Manual example finished." << std::endl;
+}
+
 int main() {
     try {
-        // --- 1. Discover connected VISA instruments ---
+        // --- Discover connected VISA instruments ---
         std::cout << "Finding connected VISA instruments..." << std::endl;
-        // findResources is a static utility, so it's called on the base class.
         const auto resources = cvisa::VisaInterface::findResources();
 
         if (resources.empty()) {
@@ -41,51 +97,11 @@ int main() {
         }
         print_separator();
 
-        // --- 2. Instantiate the driver for the first discovered instrument ---
         const std::string resource_address = resources[0];
-        std::cout << "Connecting to: " << resource_address << std::endl;
 
-        // The driver is now instantiated directly with the resource string.
-        // This single step creates the object and opens the VISA session.
-        cvisa::drivers::Agilent66xxA psu(resource_address, 5000, '\n');
-        std::cout << "Driver initialized and connection successful." << std::endl;
-        print_separator();
-
-        // --- 3. Use the driver's high-level methods ---
-        // The driver object itself now handles all communication.
-        std::string idn = psu.getIdentification();
-        std::cout << "Instrument ID: " << idn << std::endl;
-        print_separator();
-
-        // --- 4. Use the driver's specific, high-level methods ---
-        std::cout << "Configuring power supply..." << std::endl;
-        psu.setVoltage(12.0);
-        psu.setCurrent(1.0);
-
-        double v_set = psu.getVoltageSetting();
-        double i_set = psu.getCurrentSetting();
-        std::cout << std::fixed << std::setprecision(3);
-        std::cout << "-> Voltage setting confirmed: " << v_set << " V" << std::endl;
-        std::cout << "-> Current limit confirmed: " << i_set << " A" << std::endl;
-
-        psu.setOutput(true);
-        std::cout << "-> Output enabled." << std::endl;
-        print_separator();
-
-        // --- 5. Read back measured values ---
-        std::cout << "Reading back measured values..." << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-        std::cout << std::fixed << std::setprecision(4);
-        std::cout << "Measured Voltage: " << psu.measureVoltage() << " V" << std::endl;
-        std::cout << "Measured Current: " << psu.measureCurrent() << " A" << std::endl;
-        std::cout << "Is output enabled? " << (psu.isOutputEnabled() ? "Yes" : "No") << std::endl;
-        print_separator();
-
-        // --- 6. Clean up ---
-        std::cout << "Disabling output." << std::endl;
-        psu.setOutput(false);
-        std::cout << "Is output enabled? " << (psu.isOutputEnabled() ? "Yes" : "No") << std::endl;
+        // Run the two different examples to demonstrate both workflows
+        run_raii_example(resource_address);
+        run_manual_example(resource_address);
 
     } catch (const cvisa::VisaException& e) {
         std::cerr << "[VISA Error] " << e.what() << std::endl;

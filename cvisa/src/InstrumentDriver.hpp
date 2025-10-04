@@ -25,6 +25,11 @@ namespace drivers {
 class InstrumentDriver : public VisaInterface {
 public:
     /**
+     * @brief Default constructor. Creates a disconnected driver.
+     */
+    InstrumentDriver() = default;
+
+    /**
      * @brief Constructs the driver and opens a VISA session.
      * @param resourceName The VISA resource string.
      * @param timeout_ms Optional timeout in milliseconds.

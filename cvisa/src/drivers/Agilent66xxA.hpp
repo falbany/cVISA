@@ -5,6 +5,7 @@
 #include "../Command.hpp"
 #include <string>
 #include <map>
+#include <optional>
 
 namespace cvisa {
 namespace drivers {
@@ -17,10 +18,13 @@ namespace drivers {
  * command set in a static registry. It inherits its command execution logic
  * from the InstrumentDriver base class, promoting code reuse.
  */
-#include <optional>
-
 class Agilent66xxA : public InstrumentDriver {
 public:
+    /**
+     * @brief Default constructor. Creates a disconnected driver.
+     */
+    Agilent66xxA() = default;
+
     /**
      * @brief Constructs the driver and opens a VISA session.
      * @param resourceName The VISA resource string.
