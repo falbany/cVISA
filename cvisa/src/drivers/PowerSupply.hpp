@@ -2,7 +2,9 @@
 #define CVISA_DRIVER_POWER_SUPPLY_HPP
 
 #include "../InstrumentDriver.hpp"
+#include "../Command.hpp"
 #include <string>
+#include <map>
 
 namespace cvisa {
 namespace drivers {
@@ -19,9 +21,9 @@ class PowerSupply : public InstrumentDriver {
 public:
     /**
      * @brief Constructs the PowerSupply driver.
-     * @param interface A connected VisaInterface object.
+     * @param interface A connected I/O interface object.
      */
-    explicit PowerSupply(VisaInterface& interface);
+    explicit PowerSupply(IVisaIo& interface);
 
     /**
      * @brief Sets the output voltage.
@@ -58,6 +60,13 @@ public:
      * @return True if the output is on, false otherwise.
      */
     bool isOutputEnabled();
+
+private:
+    // The static command registry for the PowerSupply driver.
+    static const std::map<std::string, CommandSpec> s_commandRegistry;
+
+    // Helper to look up a command spec from the registry.
+    const CommandSpec& getSpec(const std::string& commandName) const;
 };
 
 } // namespace drivers

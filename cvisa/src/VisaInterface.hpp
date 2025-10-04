@@ -4,8 +4,10 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include "IVisaIo.hpp"
 #include <optional>
 #include <cstdint>
+#include <future>
 
 // Forward-declare VISA types to avoid including visa.h in a public header.
 using ViSession = unsigned long;
@@ -15,14 +17,14 @@ namespace cvisa {
 
 /**
  * @class VisaInterface
- * @brief A C++ RAII wrapper for the VISA C API.
+ * @brief A C++ RAII wrapper for the VISA C API that implements the IVisaIo interface.
  *
  * This class encapsulates a VISA session, providing an object-oriented,
  * exception-safe interface to the underlying communication layer. It handles
- * resource management automatically and is the foundation for all instrument
- * communication.
+ * resource management automatically and serves as the primary concrete
+ * implementation of the IVisaIo contract.
  */
-class VisaInterface {
+class VisaInterface final : public IVisaIo {
 public:
     /**
      * @brief Constructs a VisaInterface object and opens a session.
@@ -46,28 +48,15 @@ public:
     VisaInterface& operator=(VisaInterface&& other) noexcept;
 
     // --- Core I/O Operations ---
-    void write(const std::string& command);
-    std::string read(size_t bufferSize = 2048);
-    std::string query(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0);
-
-    // --- SCPI Convenience Methods ---
-    std::string getIdentification(const std::string& cmd = "*IDN?");
-    void reset(const std::string& cmd = "*RST");
-    void clearStatus(const std::string& cmd = "*CLS");
-    void waitToContinue(const std::string& cmd = "*WAI");
-    bool isOperationComplete(const std::string& cmd = "*OPC?");
-    int runSelfTest(const std::string& cmd = "*TST?");
-    uint8_t getStatusByte(const std::string& cmd = "*STB?");
-    uint8_t getEventStatusRegister(const std::string& cmd = "*ESR?");
-    void setEventStatusEnable(uint8_t mask, const std::string& cmd_prefix = "*ESE");
-    uint8_t getEventStatusEnable(const std::string& cmd = "*ESE?");
-    void setServiceRequestEnable(uint8_t mask, const std::string& cmd_prefix = "*SRE");
-    uint8_t getServiceRequestEnable(const std::string& cmd = "*SRE?");
+    void write(const std::string& command) override;
+    std::string read(size_t bufferSize = 2048) override;
+    std::string query(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0) override;
+    std::future<std::string> queryAsync(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0) override;
 
     // --- Configuration ---
-    void setTimeout(unsigned int timeout_ms);
-    void setReadTermination(char term_char, bool enable = true);
-    void setWriteTermination(char term_char);
+    void setTimeout(unsigned int timeout_ms) override;
+    void setReadTermination(char term_char, bool enable = true) override;
+    void setWriteTermination(char term_char) override;
 
     // --- Static Utilities ---
     /**
@@ -90,7 +79,3 @@ private:
 } // namespace cvisa
 
 #endif // CVISA_VISA_INTERFACE_HPP
-
-} // namespace cvisa
-
-#endif // CVISA_VISA_INSTRUMENT_HPP

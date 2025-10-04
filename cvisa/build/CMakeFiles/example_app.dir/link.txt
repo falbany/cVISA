@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/example_app.dir/examples/basic_usage.cpp.o -o example_app  libcvisa.a

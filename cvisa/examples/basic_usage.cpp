@@ -45,7 +45,8 @@ int main() {
         cvisa::drivers::Agilent66xxA psu(interface);
         std::cout << "Agilent 66xxA driver initialized." << std::endl;
 
-        std::string idn = interface.getIdentification();
+        // Get the identification string via the high-level driver
+        std::string idn = psu.getIdentification();
         std::cout << "Instrument ID: " << idn << std::endl;
         print_separator();
 

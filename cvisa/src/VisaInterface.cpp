@@ -102,79 +102,10 @@ std::string VisaInterface::query(const std::string& command, size_t bufferSize, 
     return read(bufferSize);
 }
 
-// --- SCPI Convenience Methods ---
-
-std::string VisaInterface::getIdentification(const std::string& cmd) {
-    return trim(query(cmd));
-}
-
-void VisaInterface::reset(const std::string& cmd) {
-    write(cmd);
-}
-
-void VisaInterface::clearStatus(const std::string& cmd) {
-    write(cmd);
-}
-
-void VisaInterface::waitToContinue(const std::string& cmd) {
-    write(cmd);
-}
-
-bool VisaInterface::isOperationComplete(const std::string& cmd) {
-    return trim(query(cmd)) == "1";
-}
-
-int VisaInterface::runSelfTest(const std::string& cmd) {
-    std::string response = trim(query(cmd));
-    try {
-        return std::stoi(response);
-    } catch (const std::exception& e) {
-        throw CommandException("Invalid response from self-test query ('" + cmd + "'): " + response);
-    }
-}
-
-uint8_t VisaInterface::getStatusByte(const std::string& cmd) {
-    std::string response = trim(query(cmd));
-    try {
-        return static_cast<uint8_t>(std::stoi(response));
-    } catch (const std::exception& e) {
-        throw CommandException("Invalid response for getStatusByte ('" + cmd + "'): " + response);
-    }
-}
-
-uint8_t VisaInterface::getEventStatusRegister(const std::string& cmd) {
-    std::string response = trim(query(cmd));
-    try {
-        return static_cast<uint8_t>(std::stoi(response));
-    } catch (const std::exception& e) {
-        throw CommandException("Invalid response for getEventStatusRegister ('" + cmd + "'): " + response);
-    }
-}
-
-void VisaInterface::setEventStatusEnable(uint8_t mask, const std::string& cmd_prefix) {
-    write(cmd_prefix + " " + std::to_string(mask));
-}
-
-uint8_t VisaInterface::getEventStatusEnable(const std::string& cmd) {
-    std::string response = trim(query(cmd));
-    try {
-        return static_cast<uint8_t>(std::stoi(response));
-    } catch (const std::exception& e) {
-        throw CommandException("Invalid response for getEventStatusEnable ('" + cmd + "'): " + response);
-    }
-}
-
-void VisaInterface::setServiceRequestEnable(uint8_t mask, const std::string& cmd_prefix) {
-    write(cmd_prefix + " " + std::to_string(mask));
-}
-
-uint8_t VisaInterface::getServiceRequestEnable(const std::string& cmd) {
-    std::string response = trim(query(cmd));
-    try {
-        return static_cast<uint8_t>(std::stoi(response));
-    } catch (const std::exception& e) {
-        throw CommandException("Invalid response for getServiceRequestEnable ('" + cmd + "'): " + response);
-    }
+std::future<std::string> VisaInterface::queryAsync(const std::string& command, size_t bufferSize, unsigned int delay_ms) {
+    return std::async(std::launch::async, [this, command, bufferSize, delay_ms]() {
+        return this->query(command, bufferSize, delay_ms);
+    });
 }
 
 // --- Configuration ---

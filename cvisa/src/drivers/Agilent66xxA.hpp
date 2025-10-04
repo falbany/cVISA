@@ -19,7 +19,7 @@ namespace drivers {
  */
 class Agilent66xxA : public InstrumentDriver {
 public:
-    explicit Agilent66xxA(VisaInterface& interface);
+    explicit Agilent66xxA(IVisaIo& interface);
 
     // --- Public API ---
     void setVoltage(double voltage);

@@ -24,8 +24,9 @@ enum class CommandType {
  * their command sets as data, making them easier to manage and extend.
  */
 struct CommandSpec {
-    const char* command;    // The SCPI command string template (e.g., "VOLT %f").
-    CommandType type;       // The type of the command (WRITE or QUERY).
+    const char* command;        // The SCPI command string template (e.g., "VOLT %f").
+    CommandType type;           // The type of the command (WRITE or QUERY).
+    unsigned int delay_ms = 0;  // Optional delay in ms to wait after a write, before a read.
 };
 
 } // namespace cvisa
