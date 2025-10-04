@@ -19,24 +19,19 @@ namespace drivers {
  * @brief An abstract base class for creating instrument-specific drivers.
  *
  * This class inherits from VisaInterface, combining the low-level I/O
- * capabilities with a high-level command execution engine. Drivers derived
- * from this class are instantiated directly with a VISA resource string.
+ * capabilities with a high-level command execution engine.
  */
 class InstrumentDriver : public VisaInterface {
 public:
     /**
-     * @brief Default constructor. Creates a disconnected driver.
-     */
-    InstrumentDriver() = default;
-
-    /**
-     * @brief Constructs the driver and opens a VISA session.
-     * @param resourceName The VISA resource string.
+     * @brief Constructs the InstrumentDriver.
+     * @param resourceName If provided, the constructor will connect to the instrument.
+     *                     If omitted, the object is created disconnected.
      * @param timeout_ms Optional timeout in milliseconds.
      * @param read_termination Optional read termination character.
      * @param write_termination Optional write termination character.
      */
-    explicit InstrumentDriver(const std::string& resourceName,
+    explicit InstrumentDriver(std::optional<std::string> resourceName = std::nullopt,
                               std::optional<unsigned int> timeout_ms = std::nullopt,
                               std::optional<char> read_termination = std::nullopt,
                               std::optional<char> write_termination = std::nullopt)

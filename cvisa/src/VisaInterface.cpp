@@ -12,15 +12,21 @@ namespace cvisa {
 
 // --- Constructors and Destructor ---
 
-VisaInterface::VisaInterface(const std::string& resourceName,
+VisaInterface::VisaInterface(std::optional<std::string> resourceName,
                                std::optional<unsigned int> timeout_ms,
                                std::optional<char> read_termination,
                                std::optional<char> write_termination) {
-    setRessource(resourceName);
+    // Store configuration. These will be applied on connect().
     m_timeout_ms = timeout_ms;
     m_read_termination = read_termination;
     m_write_termination = write_termination;
-    connect();
+
+    // If a resource name is provided, connect immediately (RAII-style).
+    if (resourceName) {
+        setRessource(*resourceName);
+        connect();
+    }
+    // Otherwise, the object remains disconnected, ready for manual setup.
 }
 
 VisaInterface::~VisaInterface() {

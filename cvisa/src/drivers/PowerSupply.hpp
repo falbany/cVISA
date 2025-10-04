@@ -21,21 +21,18 @@ namespace drivers {
 class PowerSupply : public InstrumentDriver {
 public:
     /**
-     * @brief Default constructor. Creates a disconnected driver.
-     */
-    PowerSupply() = default;
-
-    /**
-     * @brief Constructs the driver and opens a VISA session.
-     * @param resourceName The VISA resource string.
+     * @brief Constructs the driver.
+     * @param resourceName If provided, the constructor will connect to the instrument.
+     *                     If omitted, the object is created disconnected.
      * @param timeout_ms Optional timeout in milliseconds.
      * @param read_termination Optional read termination character.
      * @param write_termination Optional write termination character.
      */
-    explicit PowerSupply(const std::string& resourceName,
+    explicit PowerSupply(std::optional<std::string> resourceName = std::nullopt,
                          std::optional<unsigned int> timeout_ms = std::nullopt,
                          std::optional<char> read_termination = std::nullopt,
-                         std::optional<char> write_termination = std::nullopt);
+                         std::optional<char> write_termination = std::nullopt)
+        : InstrumentDriver(resourceName, timeout_ms, read_termination, write_termination) {}
 
     /**
      * @brief Sets the output voltage.

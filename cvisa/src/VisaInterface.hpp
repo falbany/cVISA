@@ -16,17 +16,24 @@ namespace cvisa {
 
 /**
  * @class VisaInterface
- * @brief A C++ RAII wrapper for the VISA C API with manual connection support.
+ * @brief A C++ RAII wrapper for the VISA C API with flexible connection management.
  *
- * This class encapsulates a VISA session, providing an object-oriented,
- * exception-safe interface to the underlying communication layer. It supports
- * both RAII-style (constructor-based) and manual connection management.
+ * This class encapsulates a VISA session. It can be constructed with a VISA
+ * resource string for immediate connection (RAII-style) or constructed empty
+ * for manual connection management.
  */
 class VisaInterface {
 public:
-    // --- Constructors and Destructor ---
-    VisaInterface() = default;
-    explicit VisaInterface(const std::string& resourceName,
+    // --- Constructor and Destructor ---
+    /**
+     * @brief Constructs the VisaInterface.
+     * @param resourceName If provided, the constructor will connect to the instrument.
+     *                     If omitted, the object is created disconnected.
+     * @param timeout_ms Optional timeout in milliseconds.
+     * @param read_termination Optional read termination character.
+     * @param write_termination Optional write termination character.
+     */
+    explicit VisaInterface(std::optional<std::string> resourceName = std::nullopt,
                            std::optional<unsigned int> timeout_ms = std::nullopt,
                            std::optional<char> read_termination = std::nullopt,
                            std::optional<char> write_termination = std::nullopt);

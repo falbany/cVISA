@@ -4,7 +4,7 @@
 
 ## Key Features
 
-*   **Flexible Connection Management:** Choose between simple, one-line RAII-style connections or manual control over the VISA session with `connect()`, `disconnect()`, and `setRessource()` methods.
+*   **Flexible Connection Management:** A unified constructor allows for both simple, one-line RAII-style connections and manual control over the VISA session with `connect()`, `disconnect()`, and `setRessource()` methods.
 *   **Simple Inheritance Model:** High-level drivers inherit directly from the core communication class, making the API intuitive and easy to use.
 *   **Asynchronous Operations:** Perform non-blocking queries using `std::future` for building responsive applications.
 *   **Object-Oriented & RAII-Compliant:** Manages VISA sessions automatically. The driver's constructor and destructor handle `viOpen` and `viClose`, preventing resource leaks.
@@ -52,9 +52,11 @@ cvisa/
 
 ## How to Use
 
-### Easy Mode: RAII-Style Connection
+The driver classes feature a single, flexible constructor.
 
-For most use cases, you can instantiate a driver directly with the VISA resource string. The connection will be opened automatically, and the destructor will ensure it is closed when the object goes out of scope.
+### Easy Mode: Automatic Connection (RAII)
+
+Provide the VISA resource string to the constructor to connect automatically. The connection will be closed when the object's destructor is called.
 
 ```cpp
 #include <iostream>
@@ -62,13 +64,11 @@ For most use cases, you can instantiate a driver directly with the VISA resource
 #include "exceptions.hpp"
 
 void raii_example(const std::string& resource_address) {
-    // 1. Instantiate the driver directly.
-    // This single line creates the object and opens the VISA session.
-    cvisa::drivers::Agilent66xxA psu(resource_address, 5000, '\n');
+    // 1. Instantiate the driver with a resource string to connect automatically.
+    cvisa::drivers::Agilent66xxA psu(resource_address);
 
     // 2. Use the driver's methods.
     std::cout << "Instrument ID: " << psu.getIdentification() << std::endl;
-    psu.setVoltage(5.0);
 
     // 3. The connection is automatically closed when `psu` is destroyed.
 }
@@ -76,7 +76,7 @@ void raii_example(const std::string& resource_address) {
 
 ### Advanced Mode: Manual Connection
 
-For applications requiring more control, you can create a disconnected driver, set its parameters, and manage the connection manually.
+Create a driver without providing a resource string to its constructor. The driver will be created in a disconnected state, ready for manual configuration and connection.
 
 ```cpp
 #include <iostream>
@@ -84,20 +84,18 @@ For applications requiring more control, you can create a disconnected driver, s
 #include "exceptions.hpp"
 
 void manual_example(const std::string& resource_address) {
-    // 1. Create a disconnected driver instance.
+    // 1. Create a disconnected driver by calling the constructor with no arguments.
     cvisa::drivers::Agilent66xxA psu;
 
-    // 2. Set the resource and connect.
+    // 2. Set the resource and connect manually.
     psu.setRessource(resource_address);
     psu.setTimeout(5000);
     psu.connect();
 
     // 3. Use the driver's methods.
-    std::cout << "Instrument is connected: " << std::boolalpha << psu.isConnected() << std::endl;
     std::cout << "ID: " << psu.getIdentification() << std::endl;
 
     // 4. Manually disconnect.
     psu.disconnect();
-    std::cout << "Instrument is connected: " << std::boolalpha << psu.isConnected() << std::endl;
 }
 ```
