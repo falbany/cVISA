@@ -5,7 +5,6 @@
 #include "../Command.hpp"
 #include <string>
 #include <map>
-#include <optional>
 
 namespace cvisa {
 namespace drivers {
@@ -21,18 +20,21 @@ namespace drivers {
 class Agilent66xxA : public InstrumentDriver {
 public:
     /**
-     * @brief Constructs the driver.
-     * @param resourceName If provided, the constructor will connect to the instrument.
-     *                     If omitted, the object is created disconnected.
-     * @param timeout_ms Optional timeout in milliseconds.
-     * @param read_termination Optional read termination character.
-     * @param write_termination Optional write termination character.
+     * @brief Default constructor. Creates a disconnected driver.
      */
-    explicit Agilent66xxA(std::optional<std::string> resourceName = std::nullopt,
-                          std::optional<unsigned int> timeout_ms = std::nullopt,
-                          std::optional<char> read_termination = std::nullopt,
-                          std::optional<char> write_termination = std::nullopt)
-        : InstrumentDriver(resourceName, timeout_ms, read_termination, write_termination) {}
+    Agilent66xxA() : InstrumentDriver() {}
+
+    /**
+     * @brief Constructs and connects with resource name only.
+     */
+    explicit Agilent66xxA(const std::string& resourceName) : InstrumentDriver(resourceName) {}
+
+    /**
+     * @brief Constructs and connects with timeout and read termination.
+     */
+    explicit Agilent66xxA(const std::string& resourceName, unsigned int timeout_ms, char read_termination)
+        : InstrumentDriver(resourceName, timeout_ms, read_termination) {}
+
 
     // --- Public API ---
     void setVoltage(double voltage);

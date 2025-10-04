@@ -9,7 +9,6 @@
 #include <cstdio>
 #include <map>
 #include <future>
-#include <optional>
 
 namespace cvisa {
 namespace drivers {
@@ -24,18 +23,20 @@ namespace drivers {
 class InstrumentDriver : public VisaInterface {
 public:
     /**
-     * @brief Constructs the InstrumentDriver.
-     * @param resourceName If provided, the constructor will connect to the instrument.
-     *                     If omitted, the object is created disconnected.
-     * @param timeout_ms Optional timeout in milliseconds.
-     * @param read_termination Optional read termination character.
-     * @param write_termination Optional write termination character.
+     * @brief Default constructor. Creates a disconnected driver.
      */
-    explicit InstrumentDriver(std::optional<std::string> resourceName = std::nullopt,
-                              std::optional<unsigned int> timeout_ms = std::nullopt,
-                              std::optional<char> read_termination = std::nullopt,
-                              std::optional<char> write_termination = std::nullopt)
-        : VisaInterface(resourceName, timeout_ms, read_termination, write_termination) {}
+    InstrumentDriver() : VisaInterface() {}
+
+    /**
+     * @brief Constructs and connects with resource name only.
+     */
+    explicit InstrumentDriver(const std::string& resourceName) : VisaInterface(resourceName) {}
+
+    /**
+     * @brief Constructs and connects with timeout and read termination.
+     */
+    explicit InstrumentDriver(const std::string& resourceName, unsigned int timeout_ms, char read_termination)
+        : VisaInterface(resourceName, timeout_ms, read_termination) {}
 
     virtual ~InstrumentDriver() = default;
 
@@ -46,7 +47,6 @@ public:
     InstrumentDriver& operator=(InstrumentDriver&&) = delete;
 
     // --- Common SCPI Commands ---
-    // These methods are implemented in InstrumentDriver.cpp
     std::string getIdentification();
     void reset();
     void clearStatus();

@@ -4,7 +4,7 @@
 
 ## Key Features
 
-*   **Flexible Connection Management:** A unified constructor allows for both simple, one-line RAII-style connections and manual control over the VISA session with `connect()`, `disconnect()`, and `setRessource()` methods.
+*   **Flexible Connection Management:** Constructor overloading allows for both simple, one-line RAII-style connections (by providing a resource string) and manual control over the VISA session (by using the default constructor).
 *   **Simple Inheritance Model:** High-level drivers inherit directly from the core communication class, making the API intuitive and easy to use.
 *   **Asynchronous Operations:** Perform non-blocking queries using `std::future` for building responsive applications.
 *   **Object-Oriented & RAII-Compliant:** Manages VISA sessions automatically. The driver's constructor and destructor handle `viOpen` and `viClose`, preventing resource leaks.
@@ -52,7 +52,7 @@ cvisa/
 
 ## How to Use
 
-The driver classes feature a single, flexible constructor.
+The driver classes feature overloaded constructors to support both simple and advanced use cases.
 
 ### Easy Mode: Automatic Connection (RAII)
 
@@ -76,7 +76,7 @@ void raii_example(const std::string& resource_address) {
 
 ### Advanced Mode: Manual Connection
 
-Create a driver without providing a resource string to its constructor. The driver will be created in a disconnected state, ready for manual configuration and connection.
+Create a driver by calling the default constructor. The driver will be created in a disconnected state, ready for manual configuration and connection.
 
 ```cpp
 #include <iostream>
@@ -84,7 +84,7 @@ Create a driver without providing a resource string to its constructor. The driv
 #include "exceptions.hpp"
 
 void manual_example(const std::string& resource_address) {
-    // 1. Create a disconnected driver by calling the constructor with no arguments.
+    // 1. Create a disconnected driver by calling the default constructor.
     cvisa::drivers::Agilent66xxA psu;
 
     // 2. Set the resource and connect manually.
