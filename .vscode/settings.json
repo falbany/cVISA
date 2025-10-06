@@ -8,7 +8,9 @@
         "optional": "cpp",
         "cstdint": "cpp",
         "utility": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "future": "cpp",
+        "thread": "cpp"
     },
     
 }

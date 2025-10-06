@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "name": "Win32",
+            "name": "Mutest-C++",
             "includePath": [
                 "${workspaceFolder}/**",
                 "C:/Program Files/IVI Foundation/VISA/Win64/lib_x64/msc/**",
@@ -15,6 +15,45 @@
             "compilerPath": "C:\\MuTest\\MinGW\\bin\\gcc.exe",
             "cStandard": "gnu11",
             "cppStandard": "gnu++11",
+            "intelliSenseMode": "windows-gcc-x86"
+        },
+        {
+            "name": "MacOs",
+            "includePath": [
+                "/Users/falbany/Documents/Code/GitHub/cVISA/**",
+                "/Library/Frameworks/VISA.framework/Versions/A/Headers/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "macos-gcc-arm64",
+            "compilerPath": "/usr/bin/clang",
+            "mergeConfigurations": false,
+            "recursiveIncludes": {},
+            "browse": {
+                "limitSymbolsToIncludedHeaders": false
+            }
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/Program Files/IVI Foundation/VISA/Win64/lib_x64/msc/**",
+                "C:/Program Files (x86)/IVI Foundation/VISA/WinNT/lib/msc/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
             "intelliSenseMode": "windows-gcc-x86"
         }
     ],
