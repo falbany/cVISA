@@ -23,6 +23,20 @@ namespace cvisa {
  * for manual connection management.
  */
 class VisaInterface {
+     private:
+    // --- Member Variables ---
+    std::string m_resourceName;
+    unsigned int m_timeout_ms;
+    bool m_timeout_ms_set;
+    char m_read_termination;
+    bool m_read_termination_set;
+    char m_write_termination;
+    bool m_write_termination_set;
+
+    // VISA handles
+    ViSession m_resourceManagerHandle;
+    ViSession m_instrumentHandle;
+
      public:
     // --- Constructors and Destructor ---
     /**
@@ -49,8 +63,13 @@ class VisaInterface {
     VisaInterface(VisaInterface&& other) noexcept;
     VisaInterface& operator=(VisaInterface&& other) noexcept;
 
+    // --- Configuration ---
+    virtual void setRessource(const std::string& resourceName);
+    virtual void setTimeout(unsigned int timeout_ms);
+    virtual void setReadTermination(char term_char, bool enable = true);
+    virtual void setWriteTermination(char term_char);
+
     // --- Manual Connection Management ---
-    void setRessource(const std::string& resourceName);
     void connect();
     void disconnect();
     bool isConnected() const;
@@ -65,11 +84,6 @@ class VisaInterface {
                                                 size_t bufferSize = 2048,
                                                 unsigned int delay_ms = 0);
 
-    // --- Configuration ---
-    virtual void setTimeout(unsigned int timeout_ms);
-    virtual void setReadTermination(char term_char, bool enable = true);
-    virtual void setWriteTermination(char term_char);
-
     // --- Static Utilities ---
     static std::vector<std::string> findResources(
         const std::string& query = "?*INSTR");
@@ -77,19 +91,6 @@ class VisaInterface {
      private:
     void checkStatus(ViStatus status, const std::string& functionName);
     void applyConfiguration();
-
-    std::string m_resourceName;
-
-    // C++11 compatible way to handle optional configuration
-    unsigned int m_timeout_ms;
-    bool m_timeout_ms_set;
-    char m_read_termination;
-    bool m_read_termination_set;
-    char m_write_termination;
-    bool m_write_termination_set;
-
-    ViSession m_resourceManagerHandle;
-    ViSession m_instrumentHandle;
 };
 
 }  // namespace cvisa

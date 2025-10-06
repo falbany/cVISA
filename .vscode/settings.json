@@ -10,7 +10,9 @@
         "utility": "cpp",
         "chrono": "cpp",
         "future": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "__tree": "cpp",
+        "locale": "cpp"
     },
     
 }
