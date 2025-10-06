@@ -1,7 +1,9 @@
 #include "PowerSupply.hpp"
-#include "../exceptions.hpp"
+
 #include <map>
 #include <string>
+
+#include "../exceptions.hpp"
 
 namespace cvisa {
 namespace drivers {
@@ -12,15 +14,15 @@ const std::map<std::string, CommandSpec> PowerSupply::s_commandRegistry = {
     {"set_current", {"CURR %f", CommandType::WRITE}},
     {"get_voltage", {"VOLT?", CommandType::QUERY}},
     {"get_current", {"CURR?", CommandType::QUERY}},
-    {"set_output",  {"OUTP %d", CommandType::WRITE}}, // Use %d for 0 or 1
-    {"get_output",  {"OUTP?", CommandType::QUERY}}
-};
+    {"set_output", {"OUTP %d", CommandType::WRITE}},  // Use %d for 0 or 1
+    {"get_output", {"OUTP?", CommandType::QUERY}}};
 
 // Helper to look up a command spec from the registry.
 const CommandSpec& PowerSupply::getSpec(const std::string& commandName) const {
     auto it = s_commandRegistry.find(commandName);
     if (it == s_commandRegistry.end()) {
-        throw std::invalid_argument("Command not found in PowerSupply registry: " + commandName);
+        throw std::invalid_argument(
+            "Command not found in PowerSupply registry: " + commandName);
     }
     return it->second;
 }
@@ -41,7 +43,8 @@ double PowerSupply::getVoltage() {
     try {
         return std::stod(response);
     } catch (const std::invalid_argument&) {
-        throw CommandException("Failed to parse voltage from instrument response: " + response);
+        throw CommandException(
+            "Failed to parse voltage from instrument response: " + response);
     }
 }
 
@@ -50,7 +53,8 @@ double PowerSupply::getCurrent() {
     try {
         return std::stod(response);
     } catch (const std::invalid_argument&) {
-        throw CommandException("Failed to parse current from instrument response: " + response);
+        throw CommandException(
+            "Failed to parse current from instrument response: " + response);
     }
 }
 
@@ -61,8 +65,9 @@ void PowerSupply::setOutput(bool enabled) {
 bool PowerSupply::isOutputEnabled() {
     std::string response = executeCommand(getSpec("get_output"));
     // Check for "1" or "ON" for broader compatibility.
-    return (response.find('1') != std::string::npos || response.find("ON") != std::string::npos);
+    return (response.find('1') != std::string::npos ||
+            response.find("ON") != std::string::npos);
 }
 
-} // namespace drivers
-} // namespace cvisa
+}  // namespace drivers
+}  // namespace cvisa

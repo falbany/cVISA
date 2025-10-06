@@ -1,10 +1,11 @@
 #ifndef CVISA_DRIVER_AGILENT_66XXA_HPP
 #define CVISA_DRIVER_AGILENT_66XXA_HPP
 
-#include "../InstrumentDriver.hpp"
-#include "../Command.hpp"
-#include <string>
 #include <map>
+#include <string>
+
+#include "../Command.hpp"
+#include "../InstrumentDriver.hpp"
 
 namespace cvisa {
 namespace drivers {
@@ -18,7 +19,7 @@ namespace drivers {
  * from the InstrumentDriver base class, promoting code reuse.
  */
 class Agilent66xxA : public InstrumentDriver {
-public:
+     public:
     /**
      * @brief Default constructor. Creates a disconnected driver.
      */
@@ -27,14 +28,15 @@ public:
     /**
      * @brief Constructs and connects with resource name only.
      */
-    explicit Agilent66xxA(const std::string& resourceName) : InstrumentDriver(resourceName) {}
+    explicit Agilent66xxA(const std::string& resourceName)
+        : InstrumentDriver(resourceName) {}
 
     /**
      * @brief Constructs and connects with timeout and read termination.
      */
-    explicit Agilent66xxA(const std::string& resourceName, unsigned int timeout_ms, char read_termination)
+    explicit Agilent66xxA(const std::string& resourceName,
+                          unsigned int timeout_ms, char read_termination)
         : InstrumentDriver(resourceName, timeout_ms, read_termination) {}
-
 
     // --- Public API ---
     void setVoltage(double voltage);
@@ -48,7 +50,7 @@ public:
     void setOutput(bool enabled);
     bool isOutputEnabled();
 
-private:
+     private:
     // --- Data-driven Command Definitions ---
     static const std::map<std::string, CommandSpec> s_commandRegistry;
 
@@ -56,7 +58,7 @@ private:
     const CommandSpec& getSpec(const std::string& commandName) const;
 };
 
-} // namespace drivers
-} // namespace cvisa
+}  // namespace drivers
+}  // namespace cvisa
 
-#endif // CVISA_DRIVER_AGILENT_66XXA_HPP
+#endif  // CVISA_DRIVER_AGILENT_66XXA_HPP

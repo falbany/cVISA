@@ -4,8 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "C:/Program Files/IVI Foundation/VISA/Win64/lib_x64/msc",
-                "C:/Program Files (x86)/IVI Foundation/VISA/WinNT/lib/msc"
+                "C:/Program Files/IVI Foundation/VISA/Win64/lib_x64/msc/**",
+                "C:/Program Files (x86)/IVI Foundation/VISA/WinNT/lib/msc/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -13,8 +13,8 @@
                 "_UNICODE"
             ],
             "compilerPath": "C:\\MuTest\\MinGW\\bin\\gcc.exe",
-            "cStandard": "c17",
-            "cppStandard": "gnu++14",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++11",
             "intelliSenseMode": "windows-gcc-x86"
         }
     ],

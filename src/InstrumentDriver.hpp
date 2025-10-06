@@ -1,14 +1,15 @@
 #ifndef CVISA_INSTRUMENT_DRIVER_HPP
 #define CVISA_INSTRUMENT_DRIVER_HPP
 
-#include "VisaInterface.hpp"
-#include "Command.hpp"
-#include <string>
-#include <stdexcept>
-#include <vector>
 #include <cstdio>
-#include <map>
 #include <future>
+#include <map>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "Command.hpp"
+#include "VisaInterface.hpp"
 
 namespace cvisa {
 namespace drivers {
@@ -21,7 +22,7 @@ namespace drivers {
  * capabilities with a high-level command execution engine.
  */
 class InstrumentDriver : public VisaInterface {
-public:
+     public:
     /**
      * @brief Default constructor. Creates a disconnected driver.
      */
@@ -30,17 +31,20 @@ public:
     /**
      * @brief Constructs and connects with resource name only.
      */
-    explicit InstrumentDriver(const std::string& resourceName) : VisaInterface(resourceName) {}
+    explicit InstrumentDriver(const std::string& resourceName)
+        : VisaInterface(resourceName) {}
 
     /**
      * @brief Constructs and connects with timeout and read termination.
      */
-    explicit InstrumentDriver(const std::string& resourceName, unsigned int timeout_ms, char read_termination)
+    explicit InstrumentDriver(const std::string& resourceName,
+                              unsigned int timeout_ms, char read_termination)
         : VisaInterface(resourceName, timeout_ms, read_termination) {}
 
     virtual ~InstrumentDriver() = default;
 
-    // Disable copy/move operations for drivers to prevent slicing and resource issues.
+    // Disable copy/move operations for drivers to prevent slicing and resource
+    // issues.
     InstrumentDriver(const InstrumentDriver&) = delete;
     InstrumentDriver& operator=(const InstrumentDriver&) = delete;
     InstrumentDriver(InstrumentDriver&&) = delete;
@@ -60,18 +64,19 @@ public:
     void setServiceRequestEnable(uint8_t mask);
     uint8_t getServiceRequestEnable();
 
-protected:
+     protected:
     // --- Command Registry for Common Commands ---
     static const std::map<std::string, CommandSpec> s_common_command_registry;
 
     /**
      * @brief Safely formats a command string using a dynamically-sized buffer.
      */
-    template<typename... Args>
+    template <typename... Args>
     std::string formatCommand(const char* cmd_format, Args... args) {
         int size = std::snprintf(nullptr, 0, cmd_format, args...);
         if (size < 0) {
-            throw std::runtime_error("Error during command formatting: snprintf failed.");
+            throw std::runtime_error(
+                "Error during command formatting: snprintf failed.");
         }
         std::vector<char> buffer(size + 1);
         std::snprintf(buffer.data(), buffer.size(), cmd_format, args...);
@@ -81,7 +86,7 @@ protected:
     /**
      * @brief Executes a command with arguments, dispatching to write or query.
      */
-    template<typename... Args>
+    template <typename... Args>
     std::string executeCommand(const CommandSpec& spec, Args... args) {
         std::string command = formatCommand(spec.command, args...);
         if (spec.type == CommandType::WRITE) {
@@ -105,10 +110,12 @@ protected:
     /**
      * @brief Executes an asynchronous QUERY command with arguments.
      */
-    template<typename... Args>
-    std::future<std::string> executeCommandAsync(const CommandSpec& spec, Args... args) {
+    template <typename... Args>
+    std::future<std::string> executeCommandAsync(const CommandSpec& spec,
+                                                 Args... args) {
         if (spec.type != CommandType::QUERY) {
-            throw std::logic_error("executeCommandAsync can only be used with QUERY commands.");
+            throw std::logic_error(
+                "executeCommandAsync can only be used with QUERY commands.");
         }
         std::string command = formatCommand(spec.command, args...);
         return queryAsync(command, 2048, spec.delay_ms);
@@ -119,13 +126,14 @@ protected:
      */
     std::future<std::string> executeCommandAsync(const CommandSpec& spec) {
         if (spec.type != CommandType::QUERY) {
-            throw std::logic_error("executeCommandAsync can only be used with QUERY commands.");
+            throw std::logic_error(
+                "executeCommandAsync can only be used with QUERY commands.");
         }
         return queryAsync(spec.command, 2048, spec.delay_ms);
     }
 };
 
-} // namespace drivers
-} // namespace cvisa
+}  // namespace drivers
+}  // namespace cvisa
 
-#endif // CVISA_INSTRUMENT_DRIVER_HPP
+#endif  // CVISA_INSTRUMENT_DRIVER_HPP

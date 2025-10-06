@@ -56,7 +56,10 @@
             "limits": "cpp",
             "new": "cpp",
             "numbers": "cpp",
-            "typeinfo": "cpp"
+            "typeinfo": "cpp",
+            "future": "cpp",
+            "thread": "cpp",
+            "map": "cpp"
         },
         "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
         "cmake.configureOnOpen": true

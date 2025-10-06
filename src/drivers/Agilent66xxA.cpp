@@ -1,29 +1,32 @@
 #include "Agilent66xxA.hpp"
-#include "../exceptions.hpp"
-#include <string>
+
 #include <stdexcept>
+#include <string>
+
+#include "../exceptions.hpp"
 
 namespace cvisa {
 namespace drivers {
 
 // --- Data-driven Command Definitions ---
-// The command registry now includes a declarative delay for measurement commands.
+// The command registry now includes a declarative delay for measurement
+// commands.
 const std::map<std::string, CommandSpec> Agilent66xxA::s_commandRegistry = {
-    {"set_voltage",     {"VOLT %f",    CommandType::WRITE}},
-    {"get_voltage_set", {"VOLT?",      CommandType::QUERY}},
-    {"meas_voltage",    {"MEAS:VOLT?", CommandType::QUERY, 50}}, // 50ms delay
-    {"set_current",     {"CURR %f",    CommandType::WRITE}},
-    {"get_current_set", {"CURR?",      CommandType::QUERY}},
-    {"meas_current",    {"MEAS:CURR?", CommandType::QUERY, 50}}, // 50ms delay
-    {"set_output",      {"OUTP %s",    CommandType::WRITE}},
-    {"get_output_state",{"OUTP?",      CommandType::QUERY}}
-};
+    {"set_voltage", {"VOLT %f", CommandType::WRITE}},
+    {"get_voltage_set", {"VOLT?", CommandType::QUERY}},
+    {"meas_voltage", {"MEAS:VOLT?", CommandType::QUERY, 50}},  // 50ms delay
+    {"set_current", {"CURR %f", CommandType::WRITE}},
+    {"get_current_set", {"CURR?", CommandType::QUERY}},
+    {"meas_current", {"MEAS:CURR?", CommandType::QUERY, 50}},  // 50ms delay
+    {"set_output", {"OUTP %s", CommandType::WRITE}},
+    {"get_output_state", {"OUTP?", CommandType::QUERY}}};
 
 // --- Private Spec Lookup Helper ---
 const CommandSpec& Agilent66xxA::getSpec(const std::string& commandName) const {
     auto it = s_commandRegistry.find(commandName);
     if (it == s_commandRegistry.end()) {
-        throw std::invalid_argument("Command not found in Agilent66xxA registry: " + commandName);
+        throw std::invalid_argument(
+            "Command not found in Agilent66xxA registry: " + commandName);
     }
     return it->second;
 }
@@ -34,10 +37,12 @@ double parse_double(const std::string& response, const std::string& context) {
     try {
         return std::stod(response);
     } catch (const std::invalid_argument&) {
-        throw CommandException("Failed to parse double from instrument response for " + context + ". Response: " + response);
+        throw CommandException(
+            "Failed to parse double from instrument response for " + context +
+            ". Response: " + response);
     }
 }
-} // namespace
+}  // namespace
 
 // --- Refactored Public API ---
 // All methods now use the unified executeCommand helper from the base class.
@@ -79,5 +84,5 @@ bool Agilent66xxA::isOutputEnabled() {
     return response.find('1') != std::string::npos;
 }
 
-} // namespace drivers
-} // namespace cvisa
+}  // namespace drivers
+}  // namespace cvisa
