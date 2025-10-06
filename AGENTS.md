@@ -2,6 +2,18 @@
 
 This guide outlines the core design principles and development patterns for the `cvisa` library. Adhering to these conventions is crucial for maintaining the library's quality, consistency, and reusability.
 
+## Code Formatting
+
+To ensure a consistent and readable codebase, all C++ source files (`.cpp`, `.hpp`) **must** be formatted using `clang-format` before committing. The project includes a `.clang-format` configuration file in the root directory that defines the coding style.
+
+You can format all C++ files by running the following command from the root of the repository:
+
+```bash
+find src examples -name "*.hpp" -o -name "*.cpp" | xargs clang-format -i
+```
+
+---
+
 ## Core Architecture
 
 The library is built on a two-layer architecture:

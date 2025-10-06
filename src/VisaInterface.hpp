@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "Logger.hpp"
+
 // Forward-declare VISA types to avoid including visa.h in a public header.
 using ViSession = unsigned long;
 using ViStatus = long;
@@ -36,6 +38,9 @@ class VisaInterface {
     // VISA handles
     ViSession m_resourceManagerHandle;
     ViSession m_instrumentHandle;
+
+    // Logging
+    LogLevel m_logLevel;
 
      public:
     // --- Constructors and Destructor ---
@@ -68,6 +73,7 @@ class VisaInterface {
     virtual void setTimeout(unsigned int timeout_ms);
     virtual void setReadTermination(char term_char, bool enable = true);
     virtual void setWriteTermination(char term_char);
+    virtual void setVerbose(LogLevel level);
 
     // --- Manual Connection Management ---
     void connect();

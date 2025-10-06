@@ -8,6 +8,7 @@
 #include <utility>  // for std::move
 #include <vector>
 
+#include "Logger.hpp"
 #include "exceptions.hpp"
 
 namespace cvisa {
@@ -22,10 +23,16 @@ VisaInterface::VisaInterface()
       m_write_termination('\n'),
       m_write_termination_set(false),
       m_resourceManagerHandle(VI_NULL),
-      m_instrumentHandle(VI_NULL) {}
+      m_instrumentHandle(VI_NULL),
+      m_logLevel(LogLevel::WARNING) {
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "VisaInterface default constructed.");
+}
 
 VisaInterface::VisaInterface(const std::string& resourceName)
     : VisaInterface() {
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "VisaInterface constructed with resource name.");
     setRessource(resourceName);
     connect();
 }
@@ -33,34 +40,53 @@ VisaInterface::VisaInterface(const std::string& resourceName)
 VisaInterface::VisaInterface(const std::string& resourceName,
                              unsigned int timeout_ms, char read_termination)
     : VisaInterface() {
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "VisaInterface constructed with resource, timeout, and term "
+                "char.");
     setRessource(resourceName);
     setTimeout(timeout_ms);
     setReadTermination(read_termination);
     connect();
 }
 
-VisaInterface::~VisaInterface() { disconnect(); }
+VisaInterface::~VisaInterface() {
+    Logger::log(m_logLevel, LogLevel::DEBUG, "VisaInterface destructed.");
+    disconnect();
+}
 
 // --- Manual Connection Management ---
 
 void VisaInterface::setRessource(const std::string& resourceName) {
     if (isConnected()) {
+        Logger::log(m_logLevel, LogLevel::ERROR,
+                    "Attempted to set resource while already connected.");
         throw ConnectionException("Cannot set resource while connected.");
     }
+    Logger::log(m_logLevel, LogLevel::INFO,
+                "Setting resource to: " + resourceName);
     m_resourceName = resourceName;
 }
 
 void VisaInterface::connect() {
     if (isConnected()) {
-        return;  // Already connected
+        Logger::log(m_logLevel, LogLevel::INFO,
+                    "Connect called but already connected.");
+        return;
     }
+    Logger::log(m_logLevel, LogLevel::INFO, "Attempting to connect...");
     if (m_resourceName.empty()) {
+        Logger::log(m_logLevel, LogLevel::ERROR,
+                    "Connection failed: resource name is empty.");
         throw ConnectionException(
             "Cannot connect: VISA resource name is not set.");
     }
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Resource name: " + m_resourceName);
 
     ViStatus status = viOpenDefaultRM(&m_resourceManagerHandle);
     if (status < VI_SUCCESS) {
+        Logger::log(m_logLevel, LogLevel::ERROR,
+                    "Failed to open VISA Default Resource Manager.");
         throw ConnectionException(
             "Failed to open VISA Default Resource Manager.");
     }
@@ -71,22 +97,35 @@ void VisaInterface::connect() {
     if (status < VI_SUCCESS) {
         viClose(m_resourceManagerHandle);
         m_resourceManagerHandle = VI_NULL;
+        Logger::log(m_logLevel, LogLevel::ERROR,
+                    "Failed to connect to instrument: " + m_resourceName);
         throw ConnectionException("Failed to connect to instrument: " +
                                   m_resourceName);
     }
 
+    Logger::log(m_logLevel, LogLevel::INFO,
+                "Successfully connected to " + m_resourceName);
     applyConfiguration();
 }
 
 void VisaInterface::disconnect() {
+    if (!isConnected()) {
+        return;
+    }
+    Logger::log(m_logLevel, LogLevel::INFO,
+                "Disconnecting from " + m_resourceName);
     if (m_instrumentHandle != VI_NULL) {
         viClose(m_instrumentHandle);
         m_instrumentHandle = VI_NULL;
+        Logger::log(m_logLevel, LogLevel::DEBUG, "Instrument handle closed.");
     }
     if (m_resourceManagerHandle != VI_NULL) {
         viClose(m_resourceManagerHandle);
         m_resourceManagerHandle = VI_NULL;
+        Logger::log(m_logLevel, LogLevel::DEBUG,
+                    "Resource manager handle closed.");
     }
+    Logger::log(m_logLevel, LogLevel::INFO, "Disconnection complete.");
 }
 
 bool VisaInterface::isConnected() const {
@@ -104,9 +143,11 @@ VisaInterface::VisaInterface(VisaInterface&& other) noexcept
       m_write_termination(other.m_write_termination),
       m_write_termination_set(other.m_write_termination_set),
       m_resourceManagerHandle(other.m_resourceManagerHandle),
-      m_instrumentHandle(other.m_instrumentHandle) {
+      m_instrumentHandle(other.m_instrumentHandle),
+      m_logLevel(other.m_logLevel) {
     other.m_resourceManagerHandle = VI_NULL;
     other.m_instrumentHandle = VI_NULL;
+    Logger::log(m_logLevel, LogLevel::DEBUG, "VisaInterface move constructed.");
 }
 
 VisaInterface& VisaInterface::operator=(VisaInterface&& other) noexcept {
@@ -121,8 +162,11 @@ VisaInterface& VisaInterface::operator=(VisaInterface&& other) noexcept {
         m_write_termination_set = other.m_write_termination_set;
         m_resourceManagerHandle = other.m_resourceManagerHandle;
         m_instrumentHandle = other.m_instrumentHandle;
+        m_logLevel = other.m_logLevel;
         other.m_resourceManagerHandle = VI_NULL;
         other.m_instrumentHandle = VI_NULL;
+        Logger::log(m_logLevel, LogLevel::DEBUG,
+                    "VisaInterface move assigned.");
     }
     return *this;
 }
@@ -133,6 +177,7 @@ void VisaInterface::write(const std::string& command) {
     if (!isConnected())
         throw ConnectionException(
             "Not connected to an instrument. Cannot write.");
+    Logger::log(m_logLevel, LogLevel::DEBUG, "Writing command: " + command);
     ViUInt32 returnCount = 0;
     ViStatus status =
         viWrite(m_instrumentHandle, (unsigned char*)command.c_str(),
@@ -144,13 +189,19 @@ std::string VisaInterface::read(size_t bufferSize) {
     if (!isConnected())
         throw ConnectionException(
             "Not connected to an instrument. Cannot read.");
+    Logger::log(
+        m_logLevel, LogLevel::DEBUG,
+        "Reading data (buffer size: " + std::to_string(bufferSize) + ")");
     std::vector<char> buffer(bufferSize);
     ViUInt32 returnCount = 0;
     ViStatus status =
         viRead(m_instrumentHandle, (unsigned char*)buffer.data(),
                static_cast<ViUInt32>(buffer.size()), &returnCount);
     checkStatus(status, "viRead");
-    return std::string(buffer.data(), returnCount);
+    std::string result(buffer.data(), returnCount);
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Read " + std::to_string(returnCount) + " bytes: " + result);
+    return result;
 }
 
 std::string VisaInterface::query(const std::string& command, size_t bufferSize,
@@ -160,6 +211,9 @@ std::string VisaInterface::query(const std::string& command, size_t bufferSize,
             "Not connected to an instrument. Cannot query.");
     write(command);
     if (delay_ms > 0) {
+        Logger::log(
+            m_logLevel, LogLevel::DEBUG,
+            "Delaying for " + std::to_string(delay_ms) + "ms before reading.");
         std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
     }
     return read(bufferSize);
@@ -171,6 +225,7 @@ std::future<std::string> VisaInterface::queryAsync(const std::string& command,
     if (!isConnected())
         throw ConnectionException(
             "Not connected to an instrument. Cannot query asynchronously.");
+    Logger::log(m_logLevel, LogLevel::DEBUG, "Starting asynchronous query.");
     return std::async(std::launch::async,
                       [this, command, bufferSize, delay_ms]() {
                           return this->query(command, bufferSize, delay_ms);
@@ -179,7 +234,14 @@ std::future<std::string> VisaInterface::queryAsync(const std::string& command,
 
 // --- Configuration ---
 
+void VisaInterface::setVerbose(LogLevel level) {
+    Logger::log(m_logLevel, LogLevel::INFO, "Changing log level.");
+    m_logLevel = level;
+}
+
 void VisaInterface::setTimeout(unsigned int timeout_ms) {
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Setting timeout to " + std::to_string(timeout_ms) + " ms.");
     m_timeout_ms = timeout_ms;
     m_timeout_ms_set = true;
     if (isConnected()) {
@@ -190,6 +252,10 @@ void VisaInterface::setTimeout(unsigned int timeout_ms) {
 }
 
 void VisaInterface::setReadTermination(char term_char, bool enable) {
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Setting read termination character to '" +
+                    std::string(1, term_char) +
+                    "' with enable=" + std::to_string(enable));
     m_read_termination = term_char;
     m_read_termination_set = enable;
     if (isConnected()) {
@@ -204,6 +270,9 @@ void VisaInterface::setReadTermination(char term_char, bool enable) {
 }
 
 void VisaInterface::setWriteTermination(char term_char) {
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Setting write termination character to '" +
+                    std::string(1, term_char) + "'.");
     m_write_termination = term_char;
     m_write_termination_set = true;
     if (isConnected()) {
@@ -227,10 +296,12 @@ std::vector<std::string> VisaInterface::findResources(
         throw VisaException(
             "Could not open VISA Default Resource Manager to find resources.");
     }
+
     ViFindList findList;
     ViUInt32 returnCount = 0;
     char instrumentDescription[VI_FIND_BUFLEN];
     std::vector<std::string> resources;
+
     status = viFindRsrc(rmSession, const_cast<char*>(query.c_str()), &findList,
                         &returnCount, instrumentDescription);
     if (status < VI_SUCCESS) {
@@ -238,20 +309,24 @@ std::vector<std::string> VisaInterface::findResources(
         if (status == VI_ERROR_RSRC_NFOUND) return {};
         throw VisaException("Failed to find VISA resources.");
     }
-    resources.push_back(instrumentDescription);
+
+    resources.emplace_back(instrumentDescription);
     for (ViUInt32 i = 1; i < returnCount; ++i) {
         status = viFindNext(findList, instrumentDescription);
         if (status < VI_SUCCESS) break;
-        resources.push_back(instrumentDescription);
+        resources.emplace_back(instrumentDescription);
     }
+
     viClose(findList);
     viClose(rmSession);
+
     return resources;
 }
 
 // --- Private Helpers ---
 
 void VisaInterface::applyConfiguration() {
+    Logger::log(m_logLevel, LogLevel::DEBUG, "Applying stored configurations.");
     if (m_timeout_ms_set) setTimeout(m_timeout_ms);
     if (m_read_termination_set) setReadTermination(m_read_termination, true);
     if (m_write_termination_set) setWriteTermination(m_write_termination);
@@ -265,6 +340,7 @@ void VisaInterface::checkStatus(ViStatus status,
         std::string errorMessage = "VISA Error in " + functionName + ": " +
                                    errorBuffer +
                                    " (Status: " + std::to_string(status) + ")";
+        Logger::log(m_logLevel, LogLevel::ERROR, errorMessage);
         if (status == VI_ERROR_TMO) throw CommandException(errorMessage);
         if (status == VI_ERROR_RSRC_NFOUND || status == VI_ERROR_RSRC_LOCKED ||
             status == VI_ERROR_CONN_LOST) {

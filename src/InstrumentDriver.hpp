@@ -89,6 +89,8 @@ class InstrumentDriver : public VisaInterface {
     template <typename... Args>
     std::string executeCommand(const CommandSpec& spec, Args... args) {
         std::string command = formatCommand(spec.command, args...);
+        Logger::log(m_logLevel, LogLevel::INFO,
+                    "Executing command: " + command);
         if (spec.type == CommandType::WRITE) {
             write(command);
             return "";
@@ -100,6 +102,8 @@ class InstrumentDriver : public VisaInterface {
      * @brief Executes a command without arguments.
      */
     std::string executeCommand(const CommandSpec& spec) {
+        Logger::log(m_logLevel, LogLevel::INFO,
+                    "Executing command: " + std::string(spec.command));
         if (spec.type == CommandType::WRITE) {
             write(spec.command);
             return "";
