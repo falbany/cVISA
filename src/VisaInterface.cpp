@@ -10,6 +10,7 @@
 
 #include "Logger.hpp"
 #include "exceptions.hpp"
+#include "utils.hpp"
 
 namespace cvisa {
 
@@ -185,13 +186,25 @@ void VisaInterface::write(const std::string& command) {
     checkStatus(status, "viWrite");
 }
 
+void VisaInterface::writeBinary(const std::vector<uint8_t>& data) {
+    if (!isConnected())
+        throw ConnectionException(
+            "Not connected to an instrument. Cannot write binary data.");
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Writing binary data of size: " + utils::to_string(data.size()));
+    ViUInt32 returnCount = 0;
+    ViStatus status = viWrite(m_instrumentHandle, (unsigned char*)data.data(),
+                            static_cast<ViUInt32>(data.size()), &returnCount);
+    checkStatus(status, "viWrite (binary)");
+}
+
 std::string VisaInterface::read(size_t bufferSize) {
     if (!isConnected())
         throw ConnectionException(
             "Not connected to an instrument. Cannot read.");
     Logger::log(
         m_logLevel, LogLevel::DEBUG,
-        "Reading data (buffer size: " + std::to_string(bufferSize) + ")");
+        "Reading data (buffer size: " + utils::to_string(bufferSize) + ")");
     std::vector<char> buffer(bufferSize);
     ViUInt32 returnCount = 0;
     ViStatus status =
@@ -200,8 +213,27 @@ std::string VisaInterface::read(size_t bufferSize) {
     checkStatus(status, "viRead");
     std::string result(buffer.data(), returnCount);
     Logger::log(m_logLevel, LogLevel::DEBUG,
-                "Read " + std::to_string(returnCount) + " bytes: " + result);
+                "Read " + utils::to_string(returnCount) + " bytes: " + result);
     return result;
+}
+
+std::vector<uint8_t> VisaInterface::readBinary(size_t bufferSize) {
+    if (!isConnected())
+        throw ConnectionException(
+            "Not connected to an instrument. Cannot read binary data.");
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Reading binary data (buffer size: " +
+                    utils::to_string(bufferSize) + ")");
+    std::vector<uint8_t> buffer(bufferSize);
+    ViUInt32 returnCount = 0;
+    ViStatus status =
+        viRead(m_instrumentHandle, buffer.data(),
+               static_cast<ViUInt32>(buffer.size()), &returnCount);
+    checkStatus(status, "viRead (binary)");
+    buffer.resize(returnCount);
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Read " + utils::to_string(returnCount) + " binary bytes.");
+    return buffer;
 }
 
 std::string VisaInterface::query(const std::string& command, size_t bufferSize,
@@ -213,7 +245,7 @@ std::string VisaInterface::query(const std::string& command, size_t bufferSize,
     if (delay_ms > 0) {
         Logger::log(
             m_logLevel, LogLevel::DEBUG,
-            "Delaying for " + std::to_string(delay_ms) + "ms before reading.");
+            "Delaying for " + utils::to_string(delay_ms) + "ms before reading.");
         std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
     }
     return read(bufferSize);
@@ -241,7 +273,7 @@ void VisaInterface::setVerbose(LogLevel level) {
 
 void VisaInterface::setTimeout(unsigned int timeout_ms) {
     Logger::log(m_logLevel, LogLevel::DEBUG,
-                "Setting timeout to " + std::to_string(timeout_ms) + " ms.");
+                "Setting timeout to " + utils::to_string(timeout_ms) + " ms.");
     m_timeout_ms = timeout_ms;
     m_timeout_ms_set = true;
     if (isConnected()) {
@@ -255,7 +287,7 @@ void VisaInterface::setReadTermination(char term_char, bool enable) {
     Logger::log(m_logLevel, LogLevel::DEBUG,
                 "Setting read termination character to '" +
                     std::string(1, term_char) +
-                    "' with enable=" + std::to_string(enable));
+                    "' with enable=" + utils::to_string(enable));
     m_read_termination = term_char;
     m_read_termination_set = enable;
     if (isConnected()) {
@@ -339,9 +371,9 @@ void VisaInterface::checkStatus(ViStatus status,
         viStatusDesc(m_resourceManagerHandle, status, errorBuffer);
         std::string errorMessage = "VISA Error in " + functionName + ": " +
                                    errorBuffer +
-                                   " (Status: " + std::to_string(status) + ")";
+                                   " (Status: " + utils::to_string(status) + ")";
         Logger::log(m_logLevel, LogLevel::ERROR, errorMessage);
-        if (status == VI_ERROR_TMO) throw CommandException(errorMessage);
+        if (status == VI_ERROR_TMO) throw TimeoutException(errorMessage);
         if (status == VI_ERROR_RSRC_NFOUND || status == VI_ERROR_RSRC_LOCKED ||
             status == VI_ERROR_CONN_LOST) {
             throw ConnectionException(errorMessage);

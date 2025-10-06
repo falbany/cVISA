@@ -14,6 +14,12 @@ find src examples -name "*.hpp" -o -name "*.cpp" | xargs clang-format -i
 
 ---
 
+## Build Environment
+
+**IMPORTANT:** Do not attempt to build the project. The VISA SDK is not available in the test environment, and the build will fail. Code changes should be validated by inspection and static analysis only.
+
+---
+
 ## Core Architecture
 
 The library is built on a two-layer architecture:
