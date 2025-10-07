@@ -48,20 +48,6 @@ class CommandException : public VisaException {
         : VisaException(message) {}
 };
 
-/**
- * @class TimeoutException
- * @brief Exception for errors that occur when a VISA operation times out.
- *
- * This is a special case of CommandException, thrown specifically when a
- * VI_ERROR_TMO status is returned, allowing for more granular error handling
- * such as retry logic.
- */
-class TimeoutException : public CommandException {
-     public:
-    explicit TimeoutException(const std::string& message)
-        : CommandException(message) {}
-};
-
 }  // namespace cvisa
 
 #endif  // CVISA_EXCEPTIONS_HPP
