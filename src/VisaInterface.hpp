@@ -81,11 +81,82 @@ class VisaInterface {
     bool isConnected() const;
 
     // --- Core I/O Operations ---
+    /**
+     * @brief Writes a command string to the instrument.
+     * @param command The SCPI command string to send.
+     * @throws ConnectionException if the interface is not connected.
+     * @throws CommandException on a VISA communication error.
+     */
     virtual void write(const std::string& command);
+
+    /**
+     * @brief Writes a block of binary data to the instrument.
+     *
+     * This method is suitable for sending waveform data or other large binary
+     * payloads. It does not append any termination characters.
+     *
+     * @param data A vector of bytes to send to the instrument.
+     * @throws ConnectionException if the interface is not connected.
+     * @throws CommandException on a VISA communication error.
+     */
+    virtual void writeBinary(const std::vector<uint8_t>& data);
+
+    /**
+     * @brief Reads a string-based response from the instrument.
+     *
+     * This operation will read up to `bufferSize` bytes or until a
+     * termination character is encountered if one has been configured.
+     *
+     * @param bufferSize The maximum number of bytes to read.
+     * @return The string response from the instrument.
+     * @throws ConnectionException if the interface is not connected.
+     * @throws TimeoutException if the read operation times out.
+     * @throws CommandException on other VISA communication errors.
+     */
     virtual std::string read(size_t bufferSize = 2048);
+
+    /**
+     * @brief Reads a block of binary data from the instrument.
+     *
+     * This method is designed to read binary data, such as a captured
+     * waveform. It reads up to `bufferSize` bytes. The instrument must be
+     * configured to send binary data (e.g., using an appropriate `FORMAT`
+     * command) before calling this.
+     *
+     * @param bufferSize The maximum number of bytes to read.
+     * @return A vector of bytes containing the data read from the instrument.
+     * @throws ConnectionException if the interface is not connected.
+     * @throws TimeoutException if the read operation times out.
+     * @throws CommandException on other VISA communication errors.
+     */
+    virtual std::vector<uint8_t> readBinary(size_t bufferSize = 4096);
+
+    /**
+     * @brief Performs a query: writes a command and reads the response.
+     *
+     * @param command The SCPI query string to send (e.g., "*IDN?").
+     * @param bufferSize The maximum number of bytes to expect in the response.
+     * @param delay_ms An optional delay in milliseconds to wait between the
+     * write and read operations.
+     * @return The string response from the instrument.
+     * @throws ConnectionException if the interface is not connected.
+     * @throws TimeoutException if the read operation times out.
+     * @throws CommandException on other VISA communication errors.
+     */
     virtual std::string query(const std::string& command,
                               size_t bufferSize = 2048,
                               unsigned int delay_ms = 0);
+
+    /**
+     * @brief Performs a query asynchronously.
+     *
+     * @param command The SCPI query string to send.
+     * @param bufferSize The maximum number of bytes for the response.
+     * @param delay_ms Optional delay between write and read.
+     * @return A `std::future<std::string>` that will hold the instrument's
+     * response.
+     * @throws ConnectionException if the interface is not connected.
+     */
     virtual std::future<std::string> queryAsync(const std::string& command,
                                                 size_t bufferSize = 2048,
                                                 unsigned int delay_ms = 0);

@@ -186,6 +186,19 @@ void VisaInterface::write(const std::string& command) {
     checkStatus(status, "viWrite");
 }
 
+void VisaInterface::writeBinary(const std::vector<uint8_t>& data) {
+    if (!isConnected())
+        throw ConnectionException(
+            "Not connected to an instrument. Cannot write binary data.");
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Writing binary data of size: " + utils::to_string(data.size()));
+    ViUInt32 returnCount = 0;
+    ViStatus status = viWrite(m_instrumentHandle, (unsigned char*)data.data(),
+                            static_cast<ViUInt32>(data.size()), &returnCount);
+    checkStatus(status, "viWrite (binary)");
+}
+
+
 std::string VisaInterface::read(size_t bufferSize) {
     if (!isConnected())
         throw ConnectionException(
@@ -203,6 +216,25 @@ std::string VisaInterface::read(size_t bufferSize) {
     Logger::log(m_logLevel, LogLevel::DEBUG,
                 "Read " + utils::to_string(returnCount) + " bytes: " + result);
     return result;
+}
+
+std::vector<uint8_t> VisaInterface::readBinary(size_t bufferSize) {
+    if (!isConnected())
+        throw ConnectionException(
+            "Not connected to an instrument. Cannot read binary data.");
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Reading binary data (buffer size: " +
+                    utils::to_string(bufferSize) + ")");
+    std::vector<uint8_t> buffer(bufferSize);
+    ViUInt32 returnCount = 0;
+    ViStatus status =
+        viRead(m_instrumentHandle, buffer.data(),
+               static_cast<ViUInt32>(buffer.size()), &returnCount);
+    checkStatus(status, "viRead (binary)");
+    buffer.resize(returnCount);
+    Logger::log(m_logLevel, LogLevel::DEBUG,
+                "Read " + utils::to_string(returnCount) + " binary bytes.");
+    return buffer;
 }
 
 std::string VisaInterface::query(const std::string& command, size_t bufferSize,
@@ -366,7 +398,7 @@ void VisaInterface::checkStatus(ViStatus status,
                                    errorBuffer +
                                    " (Status: " + utils::to_string(status) + ")";
         Logger::log(m_logLevel, LogLevel::ERROR, errorMessage);
-        if (status == VI_ERROR_TMO) throw CommandException(errorMessage);
+        if (status == VI_ERROR_TMO) throw TimeoutException(errorMessage);
         if (status == VI_ERROR_RSRC_NFOUND || status == VI_ERROR_RSRC_LOCKED ||
             status == VI_ERROR_CONN_LOST) {
             throw ConnectionException(errorMessage);
