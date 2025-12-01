@@ -1,27 +1,43 @@
 #ifndef CVISA_DRIVER_POWER_SUPPLY_HPP
 #define CVISA_DRIVER_POWER_SUPPLY_HPP
 
-#include "../InstrumentDriver.hpp"
+#include <map>
 #include <string>
+
+#include "../Command.hpp"
+#include "../InstrumentDriver.hpp"
 
 namespace cvisa {
 namespace drivers {
 
 /**
  * @class PowerSupply
- * @brief An example instrument driver for a generic SCPI-controlled power supply.
+ * @brief An example instrument driver for a generic SCPI-controlled power
+ * supply.
  *
  * This class demonstrates how to build a high-level driver on top of the
  * InstrumentDriver base. It abstracts away the specific SCPI commands for
  * controlling a power supply into clean, readable methods.
  */
 class PowerSupply : public InstrumentDriver {
-public:
+     public:
     /**
-     * @brief Constructs the PowerSupply driver.
-     * @param interface A connected VisaInterface object.
+     * @brief Default constructor. Creates a disconnected driver.
      */
-    explicit PowerSupply(VisaInterface& interface);
+    PowerSupply() : InstrumentDriver() {}
+
+    /**
+     * @brief Constructs and connects with resource name only.
+     */
+    explicit PowerSupply(const std::string& resourceName)
+        : InstrumentDriver(resourceName) {}
+
+    /**
+     * @brief Constructs and connects with timeout and read termination.
+     */
+    explicit PowerSupply(const std::string& resourceName,
+                         unsigned int timeout_ms, char read_termination)
+        : InstrumentDriver(resourceName, timeout_ms, read_termination) {}
 
     /**
      * @brief Sets the output voltage.
@@ -58,9 +74,16 @@ public:
      * @return True if the output is on, false otherwise.
      */
     bool isOutputEnabled();
+
+     private:
+    // The static command registry for the PowerSupply driver.
+    static const std::map<std::string, CommandSpec> s_commandRegistry;
+
+    // Helper to look up a command spec from the registry.
+    const CommandSpec& getSpec(const std::string& commandName) const;
 };
 
-} // namespace drivers
-} // namespace cvisa
+}  // namespace drivers
+}  // namespace cvisa
 
-#endif // CVISA_DRIVER_POWER_SUPPLY_HPP
+#endif  // CVISA_DRIVER_POWER_SUPPLY_HPP

@@ -1,0 +1,4 @@
+/app/cvisa/build/CMakeFiles/cvisa.dir
+/app/cvisa/build/CMakeFiles/example_app.dir
+/app/cvisa/build/CMakeFiles/edit_cache.dir
+/app/cvisa/build/CMakeFiles/rebuild_cache.dir

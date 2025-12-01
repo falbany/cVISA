@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcvisa.a CMakeFiles/cvisa.dir/src/VisaInterface.cpp.o CMakeFiles/cvisa.dir/src/InstrumentDriver.cpp.o CMakeFiles/cvisa.dir/src/exceptions.cpp.o CMakeFiles/cvisa.dir/src/drivers/PowerSupply.cpp.o CMakeFiles/cvisa.dir/src/drivers/Agilent66xxA.cpp.o
+/usr/bin/ranlib libcvisa.a

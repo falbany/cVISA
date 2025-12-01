@@ -1,10 +1,15 @@
 #ifndef CVISA_INSTRUMENT_DRIVER_HPP
 #define CVISA_INSTRUMENT_DRIVER_HPP
 
-#include "VisaInterface.hpp" // Changed from VisaInstrument.hpp
-#include "Command.hpp"
-#include <string>
+#include <cstdio>
+#include <future>
+#include <map>
 #include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "Command.hpp"
+#include "VisaInterface.hpp"
 
 namespace cvisa {
 namespace drivers {
@@ -13,63 +18,126 @@ namespace drivers {
  * @class InstrumentDriver
  * @brief An abstract base class for creating instrument-specific drivers.
  *
- * This class provides protected helper functions (`executeWrite`, `executeQuery`)
- * to centralize the logic for formatting and executing SCPI commands via the
- * underlying VisaInterface.
+ * This class inherits from VisaInterface, combining the low-level I/O
+ * capabilities with a high-level command execution engine.
  */
-class InstrumentDriver {
-public:
-    // Constructor now takes a VisaInterface reference
-    explicit InstrumentDriver(VisaInterface& interface)
-        : m_interface(interface) {}
+class InstrumentDriver : public VisaInterface {
+     public:
+    /**
+     * @brief Default constructor. Creates a disconnected driver.
+     */
+    InstrumentDriver() : VisaInterface() {}
+
+    /**
+     * @brief Constructs and connects with resource name only.
+     */
+    explicit InstrumentDriver(const std::string& resourceName)
+        : VisaInterface(resourceName) {}
+
+    /**
+     * @brief Constructs and connects with timeout and read termination.
+     */
+    explicit InstrumentDriver(const std::string& resourceName,
+                              unsigned int timeout_ms, char read_termination)
+        : VisaInterface(resourceName, timeout_ms, read_termination) {}
 
     virtual ~InstrumentDriver() = default;
 
+    // Disable copy/move operations for drivers to prevent slicing and resource
+    // issues.
     InstrumentDriver(const InstrumentDriver&) = delete;
     InstrumentDriver& operator=(const InstrumentDriver&) = delete;
     InstrumentDriver(InstrumentDriver&&) = delete;
     InstrumentDriver& operator=(InstrumentDriver&&) = delete;
 
-protected:
-    /**
-     * @brief Formats and executes a WRITE command.
-     */
-    template<typename... Args>
-    void executeWrite(const CommandSpec& spec, Args... args) {
-        if (spec.type != CommandType::WRITE) {
-            throw std::logic_error("Attempted to call executeWrite on a QUERY command.");
-        }
-        char buffer[256];
-        snprintf(buffer, sizeof(buffer), spec.command, args...);
-        m_interface.write(buffer); // Use m_interface
-    }
+    // --- Common SCPI Commands ---
+    std::string getIdentification();
+    void reset();
+    void clearStatus();
+    void waitToContinue();
+    bool isOperationComplete();
+    int runSelfTest();
+    uint8_t getStatusByte();
+    uint8_t getEventStatusRegister();
+    void setEventStatusEnable(uint8_t mask);
+    uint8_t getEventStatusEnable();
+    void setServiceRequestEnable(uint8_t mask);
+    uint8_t getServiceRequestEnable();
+
+     protected:
+    // --- Command Registry for Common Commands ---
+    static const std::map<std::string, CommandSpec> s_common_command_registry;
 
     /**
-     * @brief Formats and executes a QUERY command, passing a delay to the VISA layer.
+     * @brief Safely formats a command string using a dynamically-sized buffer.
      */
-    template<typename... Args>
-    std::string executeQuery(const CommandSpec& spec, unsigned int delay_ms, Args... args) {
-        if (spec.type != CommandType::QUERY) {
-            throw std::logic_error("Attempted to call executeQuery on a WRITE command.");
+    template <typename... Args>
+    std::string formatCommand(const char* cmd_format, Args... args) {
+        int size = std::snprintf(nullptr, 0, cmd_format, args...);
+        if (size < 0) {
+            throw std::runtime_error(
+                "Error during command formatting: snprintf failed.");
         }
-        char buffer[256];
-        snprintf(buffer, sizeof(buffer), spec.command, args...);
-        return m_interface.query(buffer, 2048, delay_ms); // Use m_interface
+        std::vector<char> buffer(size + 1);
+        std::snprintf(buffer.data(), buffer.size(), cmd_format, args...);
+        return std::string(buffer.data());
     }
 
-    // Overload for queries that don't require formatting or delays
-    std::string executeQuery(const CommandSpec& spec) {
-        if (spec.type != CommandType::QUERY) {
-            throw std::logic_error("Attempted to call executeQuery on a WRITE command.");
+    /**
+     * @brief Executes a command with arguments, dispatching to write or query.
+     */
+    template <typename... Args>
+    std::string executeCommand(const CommandSpec& spec, Args... args) {
+        std::string command = formatCommand(spec.command, args...);
+        Logger::log(m_logLevel, LogLevel::INFO,
+                    "Executing command: " + command);
+        if (spec.type == CommandType::WRITE) {
+            write(command);
+            return "";
         }
-        return m_interface.query(spec.command); // Use m_interface
+        return query(command, 2048, spec.delay_ms);
     }
 
-    // Renamed from m_instrument to m_interface for clarity
-    VisaInterface& m_interface;
+    /**
+     * @brief Executes a command without arguments.
+     */
+    std::string executeCommand(const CommandSpec& spec) {
+        Logger::log(m_logLevel, LogLevel::INFO,
+                    "Executing command: " + std::string(spec.command));
+        if (spec.type == CommandType::WRITE) {
+            write(spec.command);
+            return "";
+        }
+        return query(spec.command, 2048, spec.delay_ms);
+    }
+
+    /**
+     * @brief Executes an asynchronous QUERY command with arguments.
+     */
+    template <typename... Args>
+    std::future<std::string> executeCommandAsync(const CommandSpec& spec,
+                                                 Args... args) {
+        if (spec.type != CommandType::QUERY) {
+            throw std::logic_error(
+                "executeCommandAsync can only be used with QUERY commands.");
+        }
+        std::string command = formatCommand(spec.command, args...);
+        return queryAsync(command, 2048, spec.delay_ms);
+    }
+
+    /**
+     * @brief Executes an asynchronous QUERY command without arguments.
+     */
+    std::future<std::string> executeCommandAsync(const CommandSpec& spec) {
+        if (spec.type != CommandType::QUERY) {
+            throw std::logic_error(
+                "executeCommandAsync can only be used with QUERY commands.");
+        }
+        return queryAsync(spec.command, 2048, spec.delay_ms);
+    }
 };
 
-} // namespace drivers
-} // namespace cvisa
+}  // namespace drivers
+}  // namespace cvisa
 
-#endif // CVISA_INSTRUMENT_DRIVER_HPP
+#endif  // CVISA_INSTRUMENT_DRIVER_HPP

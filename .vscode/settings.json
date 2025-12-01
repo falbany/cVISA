@@ -1,0 +1,18 @@
+{
+    "files.associations": {
+        "Makefile": "makefile",
+        "*.stil": "groovy",
+        "string": "cpp",
+        "vector": "cpp",
+        "stdexcept": "cpp",
+        "optional": "cpp",
+        "cstdint": "cpp",
+        "utility": "cpp",
+        "chrono": "cpp",
+        "future": "cpp",
+        "thread": "cpp",
+        "__tree": "cpp",
+        "locale": "cpp"
+    },
+    
+}
