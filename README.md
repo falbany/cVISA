@@ -88,7 +88,7 @@ void manual_example(const std::string& resource_address) {
     cvisa::drivers::Agilent66xxA psu;
 
     // 2. Set the resource and connect manually.
-    psu.setRessource(resource_address);
+    psu.setResource(resource_address);
     psu.setTimeout(5000);
     psu.connect();
 

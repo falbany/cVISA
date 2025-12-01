@@ -34,7 +34,7 @@ VisaInterface::VisaInterface(const std::string& resourceName)
     : VisaInterface() {
     Logger::log(m_logLevel, LogLevel::DEBUG,
                 "VisaInterface constructed with resource name.");
-    setRessource(resourceName);
+    setResource(resourceName);
     connect();
 }
 
@@ -44,7 +44,7 @@ VisaInterface::VisaInterface(const std::string& resourceName,
     Logger::log(m_logLevel, LogLevel::DEBUG,
                 "VisaInterface constructed with resource, timeout, and term "
                 "char.");
-    setRessource(resourceName);
+    setResource(resourceName);
     setTimeout(timeout_ms);
     setReadTermination(read_termination);
     connect();
@@ -57,7 +57,7 @@ VisaInterface::~VisaInterface() {
 
 // --- Manual Connection Management ---
 
-void VisaInterface::setRessource(const std::string& resourceName) {
+void VisaInterface::setResource(const std::string& resourceName) {
     if (isConnected()) {
         Logger::log(m_logLevel, LogLevel::ERROR,
                     "Attempted to set resource while already connected.");
@@ -190,14 +190,14 @@ void VisaInterface::writeBinary(const std::vector<uint8_t>& data) {
     if (!isConnected())
         throw ConnectionException(
             "Not connected to an instrument. Cannot write binary data.");
-    Logger::log(m_logLevel, LogLevel::DEBUG,
-                "Writing binary data of size: " + utils::to_string(data.size()));
+    Logger::log(
+        m_logLevel, LogLevel::DEBUG,
+        "Writing binary data of size: " + utils::to_string(data.size()));
     ViUInt32 returnCount = 0;
     ViStatus status = viWrite(m_instrumentHandle, (unsigned char*)data.data(),
-                            static_cast<ViUInt32>(data.size()), &returnCount);
+                              static_cast<ViUInt32>(data.size()), &returnCount);
     checkStatus(status, "viWrite (binary)");
 }
-
 
 std::string VisaInterface::read(size_t bufferSize) {
     if (!isConnected())
@@ -244,9 +244,9 @@ std::string VisaInterface::query(const std::string& command, size_t bufferSize,
             "Not connected to an instrument. Cannot query.");
     write(command);
     if (delay_ms > 0) {
-        Logger::log(
-            m_logLevel, LogLevel::DEBUG,
-            "Delaying for " + utils::to_string(delay_ms) + "ms before reading.");
+        Logger::log(m_logLevel, LogLevel::DEBUG,
+                    "Delaying for " + utils::to_string(delay_ms) +
+                        "ms before reading.");
         std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
     }
     return read(bufferSize);
@@ -394,9 +394,9 @@ void VisaInterface::checkStatus(ViStatus status,
     if (status < VI_SUCCESS) {
         char errorBuffer[256] = {0};
         viStatusDesc(m_resourceManagerHandle, status, errorBuffer);
-        std::string errorMessage = "VISA Error in " + functionName + ": " +
-                                   errorBuffer +
-                                   " (Status: " + utils::to_string(status) + ")";
+        std::string errorMessage =
+            "VISA Error in " + functionName + ": " + errorBuffer +
+            " (Status: " + utils::to_string(status) + ")";
         Logger::log(m_logLevel, LogLevel::ERROR, errorMessage);
         if (status == VI_ERROR_TMO) throw TimeoutException(errorMessage);
         if (status == VI_ERROR_RSRC_NFOUND || status == VI_ERROR_RSRC_LOCKED ||
