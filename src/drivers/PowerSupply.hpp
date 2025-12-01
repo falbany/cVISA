@@ -4,8 +4,8 @@
 #include <map>
 #include <string>
 
-#include "../Command.hpp"
-#include "../InstrumentDriver.hpp"
+#include "../core/Command.hpp"
+#include "../core/InstrumentDriver.hpp"
 
 namespace cvisa {
 namespace drivers {
@@ -75,12 +75,30 @@ class PowerSupply : public InstrumentDriver {
      */
     bool isOutputEnabled();
 
-     private:
-    // The static command registry for the PowerSupply driver.
-    static const std::map<std::string, CommandSpec> s_commandRegistry;
-
-    // Helper to look up a command spec from the registry.
-    const CommandSpec& getSpec(const std::string& commandName) const;
+    // --- Command Definitions ---
+    struct Commands {
+        static CommandSpec SET_VOLTAGE() {
+            return CommandSpec("VOLT %f", CommandType::WRITE);
+        }
+        static CommandSpec GET_VOLTAGE() {
+            return CommandSpec("VOLT?", CommandType::QUERY,
+                               ResponseType::DOUBLE);
+        }
+        static CommandSpec SET_CURRENT() {
+            return CommandSpec("CURR %f", CommandType::WRITE);
+        }
+        static CommandSpec GET_CURRENT() {
+            return CommandSpec("CURR?", CommandType::QUERY,
+                               ResponseType::DOUBLE);
+        }
+        static CommandSpec SET_OUTPUT() {
+            return CommandSpec("OUTP %d", CommandType::WRITE);
+        }
+        static CommandSpec GET_OUTPUT() {
+            return CommandSpec("OUTP?", CommandType::QUERY,
+                               ResponseType::BOOLEAN);
+        }
+    };
 };
 
 }  // namespace drivers

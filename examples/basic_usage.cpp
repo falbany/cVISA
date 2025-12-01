@@ -7,9 +7,9 @@
 #include <vector>
 
 // Core cvisa includes
-#include "VisaInterface.hpp"  // Needed for findResources and logging
-#include "drivers/Agilent66xxA.hpp"
-#include "exceptions.hpp"
+#include "src/core/VisaInterface.hpp"  // Needed for findResources and logging
+#include "src/core/exceptions.hpp"
+#include "src/drivers/Agilent66xxA.hpp"
 
 void print_separator() {
     std::cout << "----------------------------------------" << std::endl;
@@ -75,7 +75,7 @@ void run_manual_example(const std::string& resource_address) {
     std::cout << "\nLog level for this instance set to INFO.\n" << std::endl;
 
     // 2. Set the resource and configuration, then connect manually.
-    psu.setRessource(resource_address);
+    psu.setResource(resource_address);
     psu.setTimeout(5000);
     psu.setReadTermination('\n');
     std::cout << "Resource set to: " << resource_address << std::endl;
