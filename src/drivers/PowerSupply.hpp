@@ -75,12 +75,20 @@ class PowerSupply : public InstrumentDriver {
      */
     bool isOutputEnabled();
 
-     private:
-    // The static command registry for the PowerSupply driver.
-    static const std::map<std::string, CommandSpec> s_commandRegistry;
-
-    // Helper to look up a command spec from the registry.
-    const CommandSpec& getSpec(const std::string& commandName) const;
+    // --- Command Definitions ---
+    struct Commands {
+        static constexpr CommandSpec SET_VOLTAGE = {"VOLT %f",
+                                                    CommandType::WRITE};
+        static constexpr CommandSpec GET_VOLTAGE = {"VOLT?",
+                                                    CommandType::QUERY};
+        static constexpr CommandSpec SET_CURRENT = {"CURR %f",
+                                                    CommandType::WRITE};
+        static constexpr CommandSpec GET_CURRENT = {"CURR?",
+                                                    CommandType::QUERY};
+        static constexpr CommandSpec SET_OUTPUT = {"OUTP %d",
+                                                   CommandType::WRITE};
+        static constexpr CommandSpec GET_OUTPUT = {"OUTP?", CommandType::QUERY};
+    };
 };
 
 }  // namespace drivers

@@ -84,7 +84,9 @@ class InstrumentDriver : public VisaInterface {
     }
 
     /**
-     * @brief Executes a command with arguments, dispatching to write or query.
+     * @brief Executes a command, dispatching to write or query.
+     *
+     * This function can be called with or without format arguments.
      */
     template <typename... Args>
     std::string executeCommand(const CommandSpec& spec, Args... args) {
@@ -99,20 +101,9 @@ class InstrumentDriver : public VisaInterface {
     }
 
     /**
-     * @brief Executes a command without arguments.
-     */
-    std::string executeCommand(const CommandSpec& spec) {
-        Logger::log(m_logLevel, LogLevel::INFO,
-                    "Executing command: " + std::string(spec.command));
-        if (spec.type == CommandType::WRITE) {
-            write(spec.command);
-            return "";
-        }
-        return query(spec.command, 2048, spec.delay_ms);
-    }
-
-    /**
-     * @brief Executes an asynchronous QUERY command with arguments.
+     * @brief Executes an asynchronous QUERY command.
+     *
+     * This function can be called with or without format arguments.
      */
     template <typename... Args>
     std::future<std::string> executeCommandAsync(const CommandSpec& spec,
@@ -123,17 +114,6 @@ class InstrumentDriver : public VisaInterface {
         }
         std::string command = formatCommand(spec.command, args...);
         return queryAsync(command, 2048, spec.delay_ms);
-    }
-
-    /**
-     * @brief Executes an asynchronous QUERY command without arguments.
-     */
-    std::future<std::string> executeCommandAsync(const CommandSpec& spec) {
-        if (spec.type != CommandType::QUERY) {
-            throw std::logic_error(
-                "executeCommandAsync can only be used with QUERY commands.");
-        }
-        return queryAsync(spec.command, 2048, spec.delay_ms);
     }
 };
 

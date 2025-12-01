@@ -24,7 +24,7 @@ The `cvisa` library is built on a simple and powerful inheritance-based architec
     This class inherits from `VisaInterface`, gaining all of its I/O capabilities. It enhances the base layer by adding a powerful, data-driven command execution engine and implementations for all the common SCPI commands (`*IDN?`, `*RST`, etc.).
 
 3.  **Specific Drivers (e.g., `Agilent66xxA`):**
-    A specific driver, like one for an Agilent power supply, inherits from `InstrumentDriver`. This gives it the full VISA I/O and command engine functionality. The only responsibility of a specific driver is to define its unique command set in a static map and provide public methods that are meaningful for that instrument (e.g., `setVoltage()`).
+    A specific driver, like one for an Agilent power supply, inherits from `InstrumentDriver`. This gives it the full VISA I/O and command engine functionality. The only responsibility of a specific driver is to define its unique command set in a public, nested `Commands` struct and provide public methods that are meaningful for that instrument (e.g., `setVoltage()`).
 
 ## Project Structure
 
@@ -88,7 +88,7 @@ void manual_example(const std::string& resource_address) {
     cvisa::drivers::Agilent66xxA psu;
 
     // 2. Set the resource and connect manually.
-    psu.setRessource(resource_address);
+    psu.setResource(resource_address);
     psu.setTimeout(5000);
     psu.connect();
 
