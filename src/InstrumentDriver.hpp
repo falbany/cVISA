@@ -4,12 +4,15 @@
 #include <cstdio>
 #include <future>
 #include <map>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "Command.hpp"
 #include "VisaInterface.hpp"
+#include "exceptions.hpp"
 
 namespace cvisa {
 namespace drivers {
@@ -84,7 +87,9 @@ class InstrumentDriver : public VisaInterface {
     }
 
     /**
-     * @brief Executes a command with arguments, dispatching to write or query.
+     * @brief Executes a command, dispatching to write or query.
+     *
+     * This function can be called with or without format arguments.
      */
     template <typename... Args>
     std::string executeCommand(const CommandSpec& spec, Args... args) {
@@ -99,20 +104,9 @@ class InstrumentDriver : public VisaInterface {
     }
 
     /**
-     * @brief Executes a command without arguments.
-     */
-    std::string executeCommand(const CommandSpec& spec) {
-        Logger::log(m_logLevel, LogLevel::INFO,
-                    "Executing command: " + std::string(spec.command));
-        if (spec.type == CommandType::WRITE) {
-            write(spec.command);
-            return "";
-        }
-        return query(spec.command, 2048, spec.delay_ms);
-    }
-
-    /**
-     * @brief Executes an asynchronous QUERY command with arguments.
+     * @brief Executes an asynchronous QUERY command.
+     *
+     * This function can be called with or without format arguments.
      */
     template <typename... Args>
     std::future<std::string> executeCommandAsync(const CommandSpec& spec,
@@ -126,14 +120,53 @@ class InstrumentDriver : public VisaInterface {
     }
 
     /**
-     * @brief Executes an asynchronous QUERY command without arguments.
+     * @brief Executes a query and parses the response into the specified type.
+     * @tparam T The desired return type (double, int, bool, or std::string).
      */
-    std::future<std::string> executeCommandAsync(const CommandSpec& spec) {
-        if (spec.type != CommandType::QUERY) {
-            throw std::logic_error(
-                "executeCommandAsync can only be used with QUERY commands.");
+    template <typename T, typename... Args>
+    T queryAndParse(const CommandSpec& spec, Args... args) {
+        std::string response = executeCommand(spec, args...);
+        return parseResponse<T>(response);
+    }
+
+     private:
+    // C++11 Tag Dispatching for Type-Safe Parsing
+    template <typename T>
+    struct type_tag {};
+
+    template <typename T>
+    T parseResponse(const std::string& response) {
+        return parseResponse(type_tag<T>(), response);
+    }
+
+    std::string parseResponse(type_tag<std::string>,
+                              const std::string& response) {
+        return response;
+    }
+
+    double parseResponse(type_tag<double>, const std::string& response) {
+        try {
+            return std::stod(response);
+        } catch (const std::invalid_argument& e) {
+            throw CommandException(
+                "Failed to parse double from instrument response: \"" +
+                response + "\"");
         }
-        return queryAsync(spec.command, 2048, spec.delay_ms);
+    }
+
+    int parseResponse(type_tag<int>, const std::string& response) {
+        try {
+            return std::stoi(response);
+        } catch (const std::invalid_argument& e) {
+            throw CommandException(
+                "Failed to parse int from instrument response: \"" + response +
+                "\"");
+        }
+    }
+
+    bool parseResponse(type_tag<bool>, const std::string& response) {
+        return response.find('1') != std::string::npos ||
+               response.find("ON") != std::string::npos;
     }
 };
 

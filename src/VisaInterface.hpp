@@ -69,7 +69,7 @@ class VisaInterface {
     VisaInterface& operator=(VisaInterface&& other) noexcept;
 
     // --- Configuration ---
-    virtual void setRessource(const std::string& resourceName);
+    virtual void setResource(const std::string& resourceName);
     virtual void setTimeout(unsigned int timeout_ms);
     virtual void setReadTermination(char term_char, bool enable = true);
     virtual void setWriteTermination(char term_char);

@@ -1,8 +1,8 @@
 #ifndef CVISA_UTILS_HPP
 #define CVISA_UTILS_HPP
 
-#include <string>
 #include <sstream>
+#include <string>
 
 namespace cvisa {
 namespace utils {
@@ -14,7 +14,7 @@ std::string to_string(T value) {
     return os.str();
 }
 
-} // namespace utils
-} // namespace cvisa
+}  // namespace utils
+}  // namespace cvisa
 
-#endif // CVISA_UTILS_HPP
+#endif  // CVISA_UTILS_HPP

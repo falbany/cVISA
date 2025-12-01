@@ -14,9 +14,10 @@ namespace drivers {
  * @class Agilent66xxA
  * @brief An instrument driver for the Agilent 66xxA series of power supplies.
  *
- * This driver uses a declarative, data-driven approach by defining its
- * command set in a static registry. It inherits its command execution logic
- * from the InstrumentDriver base class, promoting code reuse.
+ * This driver defines its command set as a public nested struct of static
+ * methods that return CommandSpec objects. This provides compile-time safety
+ * and enables IDE autocompletion for available commands in a C++11 compliant
+ * way.
  */
 class Agilent66xxA : public InstrumentDriver {
      public:
@@ -50,12 +51,38 @@ class Agilent66xxA : public InstrumentDriver {
     void setOutput(bool enabled);
     bool isOutputEnabled();
 
-     private:
-    // --- Data-driven Command Definitions ---
-    static const std::map<std::string, CommandSpec> s_commandRegistry;
-
-    // Helper function to look up a command spec from the registry.
-    const CommandSpec& getSpec(const std::string& commandName) const;
+    // --- Command Definitions ---
+    struct Commands {
+        static CommandSpec SET_VOLTAGE() {
+            return CommandSpec("VOLT %f", CommandType::WRITE);
+        }
+        static CommandSpec GET_VOLTAGE_SET() {
+            return CommandSpec("VOLT?", CommandType::QUERY,
+                               ResponseType::DOUBLE);
+        }
+        static CommandSpec MEAS_VOLTAGE() {
+            return CommandSpec("MEAS:VOLT?", CommandType::QUERY,
+                               ResponseType::DOUBLE, 50);
+        }
+        static CommandSpec SET_CURRENT() {
+            return CommandSpec("CURR %f", CommandType::WRITE);
+        }
+        static CommandSpec GET_CURRENT_SET() {
+            return CommandSpec("CURR?", CommandType::QUERY,
+                               ResponseType::DOUBLE);
+        }
+        static CommandSpec MEAS_CURRENT() {
+            return CommandSpec("MEAS:CURR?", CommandType::QUERY,
+                               ResponseType::DOUBLE, 50);
+        }
+        static CommandSpec SET_OUTPUT() {
+            return CommandSpec("OUTP %s", CommandType::WRITE);
+        }
+        static CommandSpec GET_OUTPUT_STATE() {
+            return CommandSpec("OUTP?", CommandType::QUERY,
+                               ResponseType::BOOLEAN);
+        }
+    };
 };
 
 }  // namespace drivers
