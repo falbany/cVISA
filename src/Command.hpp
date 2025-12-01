@@ -16,6 +16,18 @@ enum class CommandType {
 };
 
 /**
+ * @enum ResponseType
+ * @brief Defines the expected data type of a query response.
+ */
+enum class ResponseType {
+    NONE,     // For WRITE commands that have no response.
+    STRING,   // The raw string response.
+    DOUBLE,   // A floating-point number.
+    INTEGER,  // An integer.
+    BOOLEAN   // A boolean value (e.g., "0" or "1").
+};
+
+/**
  * @struct CommandSpec
  * @brief A structure to hold the declarative definition of an SCPI command.
  *
@@ -26,6 +38,8 @@ enum class CommandType {
 struct CommandSpec {
     const char* command;  // The SCPI command string template (e.g., "VOLT %f").
     CommandType type;     // The type of the command (WRITE or QUERY).
+    ResponseType responseType =
+        ResponseType::NONE;  // The expected type of the response.
     unsigned int delay_ms =
         0;  // Optional delay in ms to wait after a write, before a read.
 };

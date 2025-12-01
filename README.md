@@ -9,6 +9,7 @@
 *   **Asynchronous Operations:** Perform non-blocking queries using `std::future` for building responsive applications.
 *   **Object-Oriented & RAII-Compliant:** Manages VISA sessions automatically. The driver's constructor and destructor handle `viOpen` and `viClose`, preventing resource leaks.
 *   **Exception Safety:** All VISA function calls are checked, and descriptive exceptions are thrown on failure.
+*   **Automatic Response Parsing:** The command engine can automatically parse instrument responses into C++ types (`double`, `int`, `bool`), reducing boilerplate and improving safety.
 *   **Declarative, Data-Driven Drivers:** Implement instrument-specific drivers by defining their SCPI command sets as simple data.
 *   **Reusable Abstraction Layer:** A clean `InstrumentDriver` base class provides a shared command execution engine for all drivers.
 *   **Modern Build System:** Uses CMake for easy integration into cross-platform projects.
@@ -24,7 +25,7 @@ The `cvisa` library is built on a simple and powerful inheritance-based architec
     This class inherits from `VisaInterface`, gaining all of its I/O capabilities. It enhances the base layer by adding a powerful, data-driven command execution engine and implementations for all the common SCPI commands (`*IDN?`, `*RST`, etc.).
 
 3.  **Specific Drivers (e.g., `Agilent66xxA`):**
-    A specific driver, like one for an Agilent power supply, inherits from `InstrumentDriver`. This gives it the full VISA I/O and command engine functionality. The only responsibility of a specific driver is to define its unique command set in a static map and provide public methods that are meaningful for that instrument (e.g., `setVoltage()`).
+    A specific driver, like one for an Agilent power supply, inherits from `InstrumentDriver`. This gives it the full VISA I/O and command engine functionality. The only responsibility of a specific driver is to define its unique command set in a public, nested `Commands` struct and provide public methods that are meaningful for that instrument (e.g., `setVoltage()`).
 
 ## Project Structure
 
@@ -88,7 +89,7 @@ void manual_example(const std::string& resource_address) {
     cvisa::drivers::Agilent66xxA psu;
 
     // 2. Set the resource and connect manually.
-    psu.setRessource(resource_address);
+    psu.setResource(resource_address);
     psu.setTimeout(5000);
     psu.connect();
 

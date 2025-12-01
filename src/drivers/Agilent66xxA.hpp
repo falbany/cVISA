@@ -14,9 +14,9 @@ namespace drivers {
  * @class Agilent66xxA
  * @brief An instrument driver for the Agilent 66xxA series of power supplies.
  *
- * This driver uses a declarative, data-driven approach by defining its
- * command set in a static registry. It inherits its command execution logic
- * from the InstrumentDriver base class, promoting code reuse.
+ * This driver defines its command set as a public nested struct of static
+ * constexpr CommandSpec objects. This provides compile-time safety and enables
+ * IDE autocompletion for available commands.
  */
 class Agilent66xxA : public InstrumentDriver {
      public:
@@ -50,12 +50,25 @@ class Agilent66xxA : public InstrumentDriver {
     void setOutput(bool enabled);
     bool isOutputEnabled();
 
-     private:
-    // --- Data-driven Command Definitions ---
-    static const std::map<std::string, CommandSpec> s_commandRegistry;
-
-    // Helper function to look up a command spec from the registry.
-    const CommandSpec& getSpec(const std::string& commandName) const;
+    // --- Command Definitions ---
+    struct Commands {
+        static constexpr CommandSpec SET_VOLTAGE = {
+            "VOLT %f", CommandType::WRITE, ResponseType::NONE};
+        static constexpr CommandSpec GET_VOLTAGE_SET = {
+            "VOLT?", CommandType::QUERY, ResponseType::DOUBLE};
+        static constexpr CommandSpec MEAS_VOLTAGE = {
+            "MEAS:VOLT?", CommandType::QUERY, ResponseType::DOUBLE, 50};
+        static constexpr CommandSpec SET_CURRENT = {
+            "CURR %f", CommandType::WRITE, ResponseType::NONE};
+        static constexpr CommandSpec GET_CURRENT_SET = {
+            "CURR?", CommandType::QUERY, ResponseType::DOUBLE};
+        static constexpr CommandSpec MEAS_CURRENT = {
+            "MEAS:CURR?", CommandType::QUERY, ResponseType::DOUBLE, 50};
+        static constexpr CommandSpec SET_OUTPUT = {
+            "OUTP %s", CommandType::WRITE, ResponseType::NONE};
+        static constexpr CommandSpec GET_OUTPUT_STATE = {
+            "OUTP?", CommandType::QUERY, ResponseType::BOOLEAN};
+    };
 };
 
 }  // namespace drivers
