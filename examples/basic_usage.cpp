@@ -7,9 +7,9 @@
 #include <vector>
 
 // Core cvisa includes
-#include "VisaInterface.hpp"  // Needed for findResources and logging
-#include "drivers/Agilent66xxA.hpp"
-#include "exceptions.hpp"
+#include "src/core/VisaInterface.hpp"  // Needed for findResources and logging
+#include "src/core/exceptions.hpp"
+#include "src/drivers/Agilent66xxA.hpp"
 
 void print_separator() {
     std::cout << "----------------------------------------" << std::endl;
@@ -32,6 +32,13 @@ void run_raii_example(const std::string& resource_address) {
     // operations on this specific instance.
     psu.setVerbose(cvisa::LogLevel::DEBUG);
     std::cout << "\nLog level for this instance set to DEBUG.\n" << std::endl;
+
+    // --- Demonstrate Automatic Instrument Error Checking ---
+    // Enable this feature to automatically query the instrument's error queue
+    // after every command. If the instrument reports an error, an
+    // InstrumentException will be thrown.
+    psu.enableAutoErrorCheck(true);
+    std::cout << "Automatic instrument error checking enabled.\n" << std::endl;
 
     std::cout << "Driver initialized and connection successful." << std::endl;
     print_separator();
@@ -75,7 +82,7 @@ void run_manual_example(const std::string& resource_address) {
     std::cout << "\nLog level for this instance set to INFO.\n" << std::endl;
 
     // 2. Set the resource and configuration, then connect manually.
-    psu.setRessource(resource_address);
+    psu.setResource(resource_address);
     psu.setTimeout(5000);
     psu.setReadTermination('\n');
     std::cout << "Resource set to: " << resource_address << std::endl;

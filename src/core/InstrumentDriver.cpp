@@ -120,5 +120,14 @@ uint8_t InstrumentDriver::getServiceRequestEnable() {
     }
 }
 
+void InstrumentDriver::checkInstrumentError() {
+    std::string response = query("SYST:ERR?");
+    // SCPI standard: "+0,\"No error\"" means no error.
+    // Anything else is an error. We check for the leading '+0'
+    if (response.find("+0") != 0) {
+        throw InstrumentException("Instrument error: " + trim(response));
+    }
+}
+
 }  // namespace drivers
 }  // namespace cvisa

@@ -62,6 +62,17 @@ class TimeoutException : public CommandException {
         : CommandException(message) {}
 };
 
+/**
+ * @class InstrumentException
+ * @brief Thrown when an instrument reports an error in its error queue (e.g.,
+ *        from a SYST:ERR? query).
+ */
+class InstrumentException : public VisaException {
+     public:
+    explicit InstrumentException(const std::string& message)
+        : VisaException(message) {}
+};
+
 }  // namespace cvisa
 
 #endif  // CVISA_EXCEPTIONS_HPP

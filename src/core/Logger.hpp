@@ -30,19 +30,21 @@ class Logger {
     }
 
     /**
-     * @brief Logs a message if the message's level is at or below the active
-     *        log level.
+     * @brief Logs a formatted message if the level is appropriate.
      * @param activeLevel The current verbosity level of the calling instance.
      * @param messageLevel The log level of the message.
+     * @param resourceName The VISA resource name of the instrument.
      * @param message The message to log.
      */
     static void log(LogLevel activeLevel, LogLevel messageLevel,
+                    const std::string& resourceName,
                     const std::string& message) {
         if (s_outputStream && activeLevel >= messageLevel &&
             messageLevel != LogLevel::NONE) {
-            (*s_outputStream)
-                << "[" << getCurrentTimestamp() << "] "
-                << levelToString(messageLevel) << ": " << message << std::endl;
+            (*s_outputStream) << "[" << getCurrentTimestamp() << "] " << "["
+                              << levelToString(messageLevel) << "] " << "["
+                              << (resourceName.empty() ? "cvisa" : resourceName)
+                              << "] " << message << std::endl;
         }
     }
 
@@ -56,21 +58,20 @@ class Logger {
     static std::string levelToString(LogLevel level) {
         switch (level) {
             case LogLevel::ERROR:
-                return "ERROR";
+                return "ERROR  ";
             case LogLevel::WARNING:
                 return "WARNING";
             case LogLevel::INFO:
-                return "INFO";
+                return "INFO   ";
             case LogLevel::DEBUG:
-                return "DEBUG";
+                return "DEBUG  ";
             default:
                 return "UNKNOWN";
         }
     }
 
     /**
-     * @brief Gets the current time as a formatted string (YYYY-MM-DD
-     * HH:MM:SS.ms).
+     * @brief Gets the current time as a formatted string (HH:MM:SS.ms).
      */
     static std::string getCurrentTimestamp() {
         auto now = std::chrono::system_clock::now();
@@ -80,7 +81,7 @@ class Logger {
                   1000;
 
         std::stringstream ss;
-        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X");
+        ss << std::put_time(std::localtime(&in_time_t), "%X");
         ss << '.' << std::setw(3) << std::setfill('0') << ms.count();
         return ss.str();
     }

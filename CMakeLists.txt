@@ -4,9 +4,8 @@ cmake_minimum_required(VERSION 3.10)
 project(cvisa LANGUAGES CXX)
 
 # --- Project Settings ---
-# Set the C++ standard to C++17. This is required for features like std::string_view
-# and other modern C++ constructs that might be used.
-set(CMAKE_CXX_STANDARD 17)
+# Set the C++ standard to C++11.
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -14,8 +13,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # --- Build the cvisa Library ---
 # Create a static library target from the source files.
 add_library(cvisa
-    src/VisaInterface.cpp
-    src/exceptions.cpp
+    src/core/VisaInterface.cpp
+    src/core/InstrumentDriver.cpp
+    src/core/exceptions.cpp
+    src/utils/utils.cpp
     src/drivers/PowerSupply.cpp
     src/drivers/Agilent66xxA.cpp
 )
