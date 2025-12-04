@@ -24,20 +24,21 @@ class Agilent66xxA : public InstrumentDriver {
     /**
      * @brief Default constructor. Creates a disconnected driver.
      */
-    Agilent66xxA() : InstrumentDriver() {}
+    Agilent66xxA() : InstrumentDriver("Agilent 66xxA Series Power Supply") {}
 
     /**
      * @brief Constructs and connects with resource name only.
      */
     explicit Agilent66xxA(const std::string& resourceName)
-        : InstrumentDriver(resourceName) {}
+        : InstrumentDriver(resourceName, "Agilent 66xxA Series Power Supply") {}
 
     /**
      * @brief Constructs and connects with timeout and read termination.
      */
     explicit Agilent66xxA(const std::string& resourceName,
                           unsigned int timeout_ms, char read_termination)
-        : InstrumentDriver(resourceName, timeout_ms, read_termination) {}
+        : InstrumentDriver(resourceName, timeout_ms, read_termination,
+                           "Agilent 66xxA Series Power Supply") {}
 
     // --- Public API ---
     void setVoltage(double voltage);
@@ -54,33 +55,38 @@ class Agilent66xxA : public InstrumentDriver {
     // --- Command Definitions ---
     struct Commands {
         static CommandSpec SET_VOLTAGE() {
-            return CommandSpec("VOLT %f", CommandType::WRITE);
+            return CommandSpec("VOLT %f", CommandType::WRITE,
+                               ResponseType::NONE, 0, "Set output voltage.");
         }
         static CommandSpec GET_VOLTAGE_SET() {
             return CommandSpec("VOLT?", CommandType::QUERY,
-                               ResponseType::DOUBLE);
+                               ResponseType::DOUBLE, 0,
+                               "Get output voltage setting.");
         }
         static CommandSpec MEAS_VOLTAGE() {
             return CommandSpec("MEAS:VOLT?", CommandType::QUERY,
-                               ResponseType::DOUBLE, 50);
+                               ResponseType::DOUBLE, 50, "Measure voltage.");
         }
         static CommandSpec SET_CURRENT() {
-            return CommandSpec("CURR %f", CommandType::WRITE);
+            return CommandSpec("CURR %f", CommandType::WRITE,
+                               ResponseType::NONE, 0, "Set output current.");
         }
         static CommandSpec GET_CURRENT_SET() {
             return CommandSpec("CURR?", CommandType::QUERY,
-                               ResponseType::DOUBLE);
+                               ResponseType::DOUBLE, 0,
+                               "Get output current setting.");
         }
         static CommandSpec MEAS_CURRENT() {
             return CommandSpec("MEAS:CURR?", CommandType::QUERY,
-                               ResponseType::DOUBLE, 50);
+                               ResponseType::DOUBLE, 50, "Measure current.");
         }
         static CommandSpec SET_OUTPUT() {
-            return CommandSpec("OUTP %s", CommandType::WRITE);
+            return CommandSpec("OUTP %s", CommandType::WRITE,
+                               ResponseType::NONE, 0, "Set output state.");
         }
         static CommandSpec GET_OUTPUT_STATE() {
             return CommandSpec("OUTP?", CommandType::QUERY,
-                               ResponseType::BOOLEAN);
+                               ResponseType::BOOLEAN, 0, "Get output state.");
         }
     };
 };

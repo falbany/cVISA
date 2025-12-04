@@ -41,11 +41,73 @@ struct CommandSpec {
     ResponseType responseType;  // The expected type of the response.
     unsigned int
         delay_ms;  // Optional delay in ms to wait after a write, before a read.
+    std::string description;  // A human-readable description of the command.
 
     // C++11 constructor to provide default values.
     CommandSpec(const char* cmd, CommandType t,
-                ResponseType rt = ResponseType::NONE, unsigned int delay = 0)
-        : command(cmd), type(t), responseType(rt), delay_ms(delay) {}
+                ResponseType rt = ResponseType::NONE, unsigned int delay = 0,
+                const std::string& desc = "")
+        : command(cmd),
+          type(t),
+          responseType(rt),
+          delay_ms(delay),
+          description(desc) {}
+};
+
+/**
+ * @struct CommonCommands
+ * @brief A struct containing static methods that return CommandSpec objects for
+ * common SCPI commands.
+ */
+struct CommonCommands {
+    static CommandSpec getIdentification() {
+        return CommandSpec("*IDN?", CommandType::QUERY, ResponseType::STRING, 0,
+                           "Get identification string.");
+    }
+    static CommandSpec reset() {
+        return CommandSpec("*RST", CommandType::WRITE, ResponseType::NONE, 0,
+                           "Perform a system reset.");
+    }
+    static CommandSpec clearStatus() {
+        return CommandSpec("*CLS", CommandType::WRITE, ResponseType::NONE, 0,
+                           "Clear status registers.");
+    }
+    static CommandSpec selfTest() {
+        return CommandSpec("*TST?", CommandType::QUERY, ResponseType::INTEGER,
+                           0, "Initiate a self-test.");
+    }
+    static CommandSpec operationComplete() {
+        return CommandSpec("*OPC?", CommandType::QUERY, ResponseType::INTEGER,
+                           0, "Operation complete query.");
+    }
+    static CommandSpec waitToContinue() {
+        return CommandSpec("*WAI", CommandType::WRITE, ResponseType::NONE, 0,
+                           "Wait for operation complete.");
+    }
+    static CommandSpec getStatusByte() {
+        return CommandSpec("*STB?", CommandType::QUERY, ResponseType::INTEGER,
+                           0, "Get status byte.");
+    }
+    static CommandSpec getEventStatusRegister() {
+        return CommandSpec("*ESR?", CommandType::QUERY, ResponseType::INTEGER,
+                           0, "Get event status register.");
+    }
+    static CommandSpec setEventStatusEnable() {
+        return CommandSpec("*ESE %d", CommandType::WRITE, ResponseType::NONE, 0,
+                           "Set event status enable.");
+    }
+    static CommandSpec getEventStatusEnable() {
+        return CommandSpec("*ESE?", CommandType::QUERY, ResponseType::INTEGER,
+                           0, "Get event status enable.");
+    }
+    static CommandSpec setServiceRequestEnable() {
+        return CommandSpec("*SRE %d", CommandType::WRITE, ResponseType::NONE, 0,
+                           "Set service request enable.");
+    }
+    static CommandSpec getServiceRequestEnable() {
+        return CommandSpec("*SRE?", CommandType::QUERY, ResponseType::INTEGER,
+                           0, "Get service request enable.");
+    }
 };
 
 }  // namespace cvisa

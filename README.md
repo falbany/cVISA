@@ -99,3 +99,31 @@ void manual_example(const std::string& resource_address) {
     psu.disconnect();
 }
 ```
+
+### Command Chaining
+
+For instruments that support it, you can send multiple `WRITE` commands in a single operation using `executeCommandChain()`. This can improve performance by reducing I/O overhead.
+
+**Note:** This feature is only for `WRITE` commands that do not require formatting arguments.
+
+```cpp
+#include <vector>
+#include "src/drivers/ThermalAirTA5000.hpp"
+#include "src/core/Command.hpp"
+
+void chain_example(cvisa::drivers::ThermalAirTA5000& ta5000) {
+    // 1. Create a vector of commands to execute.
+    std::vector<cvisa::CommandSpec> commands = {
+        cvisa::drivers::ThermalAirTA5000::Commands::setFlowOn(),
+        cvisa::drivers::ThermalAirTA5000::Commands::setHeadDown(),
+        cvisa::drivers::ThermalAirTA5000::Commands::setDutControlModeOn()
+    };
+
+    // 2. Execute the command chain.
+    // This will send a single string like "FLOW 1;HEAD 1;DUTM 1"
+    ta5000.executeCommandChain(commands);
+
+    // You can also specify a custom delimiter.
+    // ta5000.executeCommandChain(commands, ",");
+}
+```
