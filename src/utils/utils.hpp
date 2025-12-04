@@ -5,16 +5,16 @@
 #include <string>
 
 namespace cvisa {
-namespace utils {
+    namespace utils {
 
-template <typename T>
-std::string to_string(T value) {
-    std::ostringstream os;
-    os << value;
-    return os.str();
-}
+        template <typename T>
+        std::string to_string(T value) {
+            std::ostringstream os;
+            os << value;
+            return os.str();
+        }
 
-}  // namespace utils
-}  // namespace cvisa
+    }    // namespace utils
+}    // namespace cvisa
 
-#endif  // CVISA_UTILS_HPP
+#endif    // CVISA_UTILS_HPP

@@ -19,6 +19,7 @@ add_library(cvisa
     src/utils/utils.cpp
     src/drivers/PowerSupply.cpp
     src/drivers/Agilent66xxA.cpp
+    src/drivers/ThermalAirTA5000.cpp
 )
 
 # Make the 'src' directory publicly available for includes.
@@ -79,11 +80,16 @@ endif()
 add_executable(example_app
     examples/basic_usage.cpp
 )
+add_executable(ta5000_example
+    examples/ta5000_usage.cpp
+)
+
 
 # Link the example application against our cvisa library.
 # CMake automatically handles setting up include paths and linking because
 # we defined these properties as PUBLIC on the cvisa target.
 target_link_libraries(example_app PRIVATE cvisa)
+target_link_libraries(ta5000_example PRIVATE cvisa)
 
 # Optional: Add a message to guide the user on how to build.
 message(STATUS "CVisa library and example configured. To build, run your build tool (e.g., 'make' or 'ninja').")
