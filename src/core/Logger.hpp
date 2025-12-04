@@ -1,11 +1,13 @@
 #ifndef CVISA_LOGGER_HPP
 #define CVISA_LOGGER_HPP
 
+#include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace cvisa {
 
@@ -21,13 +23,29 @@ enum class LogLevel {
 class Logger {
      public:
     /**
-     * @brief Sets the output stream for all log messages.
+     * @brief Sets the output stream, clearing all other sinks.
      * @param stream A pointer to the desired output stream (e.g., &std::cout,
      * &myfile). Defaults to &std::cerr.
      */
     static void setOutputStream(std::ostream* stream) {
-        s_outputStream = stream ? stream : &std::cerr;
+        clearSinks();
+        if (stream) {
+            addSink(*stream);
+        }
     }
+
+    /**
+     * @brief Adds an output stream to the list of logging sinks.
+     * @param stream A reference to the output stream.
+     */
+    static void addSink(std::ostream& stream) {
+        s_outputStreams.push_back(&stream);
+    }
+
+    /**
+     * @brief Clears all registered logging sinks.
+     */
+    static void clearSinks() { s_outputStreams.clear(); }
 
     /**
      * @brief Logs a formatted message if the level is appropriate.
@@ -39,18 +57,25 @@ class Logger {
     static void log(LogLevel activeLevel, LogLevel messageLevel,
                     const std::string& resourceName,
                     const std::string& message) {
-        if (s_outputStream && activeLevel >= messageLevel &&
+        if (!s_outputStreams.empty() && activeLevel >= messageLevel &&
             messageLevel != LogLevel::NONE) {
-            (*s_outputStream) << "[" << getCurrentTimestamp() << "] " << "["
-                              << levelToString(messageLevel) << "] " << "["
-                              << (resourceName.empty() ? "cvisa" : resourceName)
-                              << "] " << message << std::endl;
+            std::stringstream full_message;
+            full_message << "[" << getCurrentTimestamp() << "] " << "["
+                         << levelToString(messageLevel) << "] " << "["
+                         << (resourceName.empty() ? "cvisa" : resourceName)
+                         << "] " << message;
+
+            for (auto* stream : s_outputStreams) {
+                if (stream) {
+                    (*stream) << full_message.str() << std::endl;
+                }
+            }
         }
     }
 
      private:
-    // The stream where log messages will be written.
-    static std::ostream* s_outputStream;
+    // The streams where log messages will be written.
+    static std::vector<std::ostream*> s_outputStreams;
 
     /**
      * @brief Converts a LogLevel enum to its string representation.
@@ -87,8 +112,8 @@ class Logger {
     }
 };
 
-// Initialize the static output stream to std::cerr by default.
-std::ostream* Logger::s_outputStream = &std::cerr;
+// Initialize the static output stream vector.
+std::vector<std::ostream*> Logger::s_outputStreams;
 
 }  // namespace cvisa
 

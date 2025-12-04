@@ -20,6 +20,40 @@ find src examples -name "*.hpp" -o -name "*.cpp" | xargs clang-format -i
 
 ---
 
+## Logging Engine
+
+The library includes a flexible, static logging engine in `src/core/Logger.hpp`.
+
+*   **Static Class:** The `Logger` is a static class, so you can call its methods directly (e.g., `cvisa::Logger::log(...)`) without needing an instance.
+*   **Multiple Sinks:** The logger supports writing to multiple output streams (or "sinks") simultaneously. You can add any `std::ostream` object as a sink, such as `std::cout` or a file stream.
+*   **Verbosity Levels:** Logging is controlled by a `LogLevel` enum. Messages will only be written if their level is less than or equal to the active verbosity level set on the `VisaInterface` or `InstrumentDriver` instance.
+
+### How to Use the Logger
+
+You can add and remove logging destinations at any time.
+
+```cpp
+#include "src/core/Logger.hpp"
+#include <iostream>
+#include <fstream>
+
+// Create a log file
+std::ofstream logfile("cvisa_log.txt");
+
+// Add std::cout as a logging destination
+cvisa::Logger::addSink(std::cout);
+
+// Add the log file as another destination
+cvisa::Logger::addSink(logfile);
+
+// ... your cvisa code ...
+
+// To clear all logging destinations:
+cvisa::Logger::clearSinks();
+```
+
+---
+
 ## Core Architecture
 
 The library is built on a simple inheritance-based architecture:

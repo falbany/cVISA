@@ -18,48 +18,28 @@ std::string trim(const std::string& s) {
 namespace cvisa {
 namespace drivers {
 
-// --- Command Registry for Common SCPI Commands ---
-const std::map<std::string, CommandSpec>
-    InstrumentDriver::s_common_command_registry = {
-        {"get_idn", {"*IDN?", CommandType::QUERY}},
-        {"reset", {"*RST", CommandType::WRITE}},
-        {"clear_status", {"*CLS", CommandType::WRITE}},
-        {"wait", {"*WAI", CommandType::WRITE}},
-        {"op_complete_q", {"*OPC?", CommandType::QUERY}},
-        {"self_test_q", {"*TST?", CommandType::QUERY}},
-        {"status_byte_q", {"*STB?", CommandType::QUERY}},
-        {"event_status_q", {"*ESR?", CommandType::QUERY}},
-        {"event_enable", {"*ESE %d", CommandType::WRITE}},
-        {"event_enable_q", {"*ESE?", CommandType::QUERY}},
-        {"service_req_en", {"*SRE %d", CommandType::WRITE}},
-        {"service_req_en_q", {"*SRE?", CommandType::QUERY}}};
-
 // --- Common SCPI Command Implementations ---
 
 std::string InstrumentDriver::getIdentification() {
-    return trim(executeCommand(s_common_command_registry.at("get_idn")));
+    return trim(executeCommand(CommonCommands::getIdentification()));
 }
 
-void InstrumentDriver::reset() {
-    executeCommand(s_common_command_registry.at("reset"));
-}
+void InstrumentDriver::reset() { executeCommand(CommonCommands::reset()); }
 
 void InstrumentDriver::clearStatus() {
-    executeCommand(s_common_command_registry.at("clear_status"));
+    executeCommand(CommonCommands::clearStatus());
 }
 
 void InstrumentDriver::waitToContinue() {
-    executeCommand(s_common_command_registry.at("wait"));
+    executeCommand(CommonCommands::waitToContinue());
 }
 
 bool InstrumentDriver::isOperationComplete() {
-    return trim(executeCommand(
-               s_common_command_registry.at("op_complete_q"))) == "1";
+    return trim(executeCommand(CommonCommands::operationComplete())) == "1";
 }
 
 int InstrumentDriver::runSelfTest() {
-    std::string response =
-        trim(executeCommand(s_common_command_registry.at("self_test_q")));
+    std::string response = trim(executeCommand(CommonCommands::selfTest()));
     try {
         return std::stoi(response);
     } catch (const std::exception& e) {
@@ -70,7 +50,7 @@ int InstrumentDriver::runSelfTest() {
 
 uint8_t InstrumentDriver::getStatusByte() {
     std::string response =
-        trim(executeCommand(s_common_command_registry.at("status_byte_q")));
+        trim(executeCommand(CommonCommands::getStatusByte()));
     try {
         return static_cast<uint8_t>(std::stoi(response));
     } catch (const std::exception& e) {
@@ -81,7 +61,7 @@ uint8_t InstrumentDriver::getStatusByte() {
 
 uint8_t InstrumentDriver::getEventStatusRegister() {
     std::string response =
-        trim(executeCommand(s_common_command_registry.at("event_status_q")));
+        trim(executeCommand(CommonCommands::getEventStatusRegister()));
     try {
         return static_cast<uint8_t>(std::stoi(response));
     } catch (const std::exception& e) {
@@ -91,12 +71,12 @@ uint8_t InstrumentDriver::getEventStatusRegister() {
 }
 
 void InstrumentDriver::setEventStatusEnable(uint8_t mask) {
-    executeCommand(s_common_command_registry.at("event_enable"), mask);
+    executeCommand(CommonCommands::setEventStatusEnable(), mask);
 }
 
 uint8_t InstrumentDriver::getEventStatusEnable() {
     std::string response =
-        trim(executeCommand(s_common_command_registry.at("event_enable_q")));
+        trim(executeCommand(CommonCommands::getEventStatusEnable()));
     try {
         return static_cast<uint8_t>(std::stoi(response));
     } catch (const std::exception& e) {
@@ -106,12 +86,12 @@ uint8_t InstrumentDriver::getEventStatusEnable() {
 }
 
 void InstrumentDriver::setServiceRequestEnable(uint8_t mask) {
-    executeCommand(s_common_command_registry.at("service_req_en"), mask);
+    executeCommand(CommonCommands::setServiceRequestEnable(), mask);
 }
 
 uint8_t InstrumentDriver::getServiceRequestEnable() {
     std::string response =
-        trim(executeCommand(s_common_command_registry.at("service_req_en_q")));
+        trim(executeCommand(CommonCommands::getServiceRequestEnable()));
     try {
         return static_cast<uint8_t>(std::stoi(response));
     } catch (const std::exception& e) {
@@ -126,6 +106,43 @@ void InstrumentDriver::checkInstrumentError() {
     // Anything else is an error. We check for the leading '+0'
     if (response.find("+0") != 0) {
         throw InstrumentException("Instrument error: " + trim(response));
+    }
+}
+
+void InstrumentDriver::executeCommandChain(
+    const std::vector<CommandSpec>& commands, const std::string& delimiter) {
+    if (commands.empty()) {
+        return;  // Nothing to do
+    }
+
+    std::string chained_command;
+    for (size_t i = 0; i < commands.size(); ++i) {
+        const auto& spec = commands[i];
+
+        // Safety checks
+        if (spec.type != CommandType::WRITE) {
+            throw std::logic_error(
+                "executeCommandChain only supports WRITE commands.");
+        }
+        if (std::string(spec.command).find('%') != std::string::npos) {
+            throw std::logic_error(
+                "executeCommandChain does not support commands with format "
+                "specifiers.");
+        }
+
+        chained_command += spec.command;
+        if (i < commands.size() - 1) {
+            chained_command += delimiter;
+        }
+    }
+
+    Logger::log(m_logLevel, LogLevel::INFO, m_resourceName,
+                "Executing command chain: " + chained_command);
+
+    write(chained_command);
+
+    if (m_autoErrorCheckEnabled) {
+        checkInstrumentError();
     }
 }
 
