@@ -19,6 +19,7 @@ add_library(cvisa
     src/utils/utils.cpp
     src/drivers/PowerSupply.cpp
     src/drivers/Agilent66xxA.cpp
+    src/drivers/ThermalAirTA5000.cpp
 )
 
 # Make the 'src' directory publicly available for includes.

@@ -29,20 +29,24 @@ class InstrumentDriver : public VisaInterface {
     /**
      * @brief Default constructor. Creates a disconnected driver.
      */
-    InstrumentDriver() : VisaInterface() {}
+    InstrumentDriver(const std::string& description = "")
+        : VisaInterface(), m_description(description) {}
 
     /**
      * @brief Constructs and connects with resource name only.
      */
-    explicit InstrumentDriver(const std::string& resourceName)
-        : VisaInterface(resourceName) {}
+    explicit InstrumentDriver(const std::string& resourceName,
+                              const std::string& description = "")
+        : VisaInterface(resourceName), m_description(description) {}
 
     /**
      * @brief Constructs and connects with timeout and read termination.
      */
     explicit InstrumentDriver(const std::string& resourceName,
-                              unsigned int timeout_ms, char read_termination)
-        : VisaInterface(resourceName, timeout_ms, read_termination) {}
+                              unsigned int timeout_ms, char read_termination,
+                              const std::string& description = "")
+        : VisaInterface(resourceName, timeout_ms, read_termination),
+          m_description(description) {}
 
     virtual ~InstrumentDriver() = default;
 
@@ -52,6 +56,11 @@ class InstrumentDriver : public VisaInterface {
     InstrumentDriver& operator=(const InstrumentDriver&) = delete;
     InstrumentDriver(InstrumentDriver&&) = delete;
     InstrumentDriver& operator=(InstrumentDriver&&) = delete;
+
+    /**
+     * @brief Returns the instrument's description.
+     */
+    std::string getDescription() const { return m_description; }
 
     // --- Common SCPI Commands ---
     std::string getIdentification();
@@ -68,6 +77,8 @@ class InstrumentDriver : public VisaInterface {
     uint8_t getServiceRequestEnable();
 
      protected:
+    std::string m_description;  // A description of the instrument.
+
     // --- Command Registry for Common Commands ---
     static const std::map<std::string, CommandSpec> s_common_command_registry;
 

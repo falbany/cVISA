@@ -41,11 +41,17 @@ struct CommandSpec {
     ResponseType responseType;  // The expected type of the response.
     unsigned int
         delay_ms;  // Optional delay in ms to wait after a write, before a read.
+    std::string description;  // A human-readable description of the command.
 
     // C++11 constructor to provide default values.
     CommandSpec(const char* cmd, CommandType t,
-                ResponseType rt = ResponseType::NONE, unsigned int delay = 0)
-        : command(cmd), type(t), responseType(rt), delay_ms(delay) {}
+                ResponseType rt = ResponseType::NONE, unsigned int delay = 0,
+                const std::string& desc = "")
+        : command(cmd),
+          type(t),
+          responseType(rt),
+          delay_ms(delay),
+          description(desc) {}
 };
 
 }  // namespace cvisa
