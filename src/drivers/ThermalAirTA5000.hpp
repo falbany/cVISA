@@ -9,46 +9,199 @@
 namespace cvisa {
 namespace drivers {
 
+/**
+ * @class ThermalAirTA5000
+ * @brief An instrument driver for the MPI Thermal TA-5000 thermal air stream
+ * system.
+ *
+ * This driver provides a high-level C++ interface for controlling the TA-5000,
+ * which is used for temperature testing and characterization of electronic
+ * components over a range of -80°C to +225°C.
+ */
 class ThermalAirTA5000 : public InstrumentDriver {
      public:
+    /**
+     * @brief Default constructor. Creates a disconnected driver.
+     */
     ThermalAirTA5000() : InstrumentDriver("MPI Thermal TA-5000") {}
 
+    /**
+     * @brief Constructs and connects with a VISA resource name.
+     * @param resourceName The VISA resource name (e.g., "GPIB0::12::INSTR").
+     */
     explicit ThermalAirTA5000(const std::string& resourceName)
         : InstrumentDriver(resourceName, "MPI Thermal TA-5000") {}
 
+    /**
+     * @brief Constructs and connects with full VISA parameters.
+     * @param resourceName The VISA resource name.
+     * @param timeout_ms The communication timeout in milliseconds.
+     * @param read_termination The character to terminate reads.
+     */
     explicit ThermalAirTA5000(const std::string& resourceName,
                               unsigned int timeout_ms, char read_termination)
         : InstrumentDriver(resourceName, timeout_ms, read_termination,
                            "MPI Thermal TA-5000") {}
 
     // Public API
+    /**
+     * @brief Reads the main temperature.
+     * @return The temperature in degrees Celsius.
+     */
     double getTemperature();
+
+    /**
+     * @brief Reads the air temperature.
+     * @return The air temperature in degrees Celsius.
+     */
     double getAirTemperature();
+
+    /**
+     * @brief Reads the DUT temperature.
+     * @return The DUT temperature in degrees Celsius.
+     */
     double getDutTemperature();
+
+    /**
+     * @brief Sets the temperature setpoint.
+     * @param temperature The desired temperature in degrees Celsius.
+     */
     void setSetpoint(double temperature);
+
+    /**
+     * @brief Reads the current temperature setpoint.
+     * @return The setpoint in degrees Celsius.
+     */
     double getSetpoint();
+
+    /**
+     * @brief Sets the soak time.
+     * @param seconds The soak time in seconds.
+     */
     void setSoakTime(int seconds);
+
+    /**
+     * @brief Reads the soak time.
+     * @return The soak time in seconds.
+     */
     int getSoakTime();
+
+    /**
+     * @brief Sets the temperature window.
+     * @param window The temperature window in degrees Celsius.
+     */
     void setTemperatureWindow(double window);
+
+    /**
+     * @brief Reads the temperature window.
+     * @return The temperature window in degrees Celsius.
+     */
     double getTemperatureWindow();
+
+    /**
+     * @brief Puts the thermal head up.
+     */
     void setHeadUp();
+
+    /**
+     * @brief Puts the thermal head down.
+     */
     void setHeadDown();
+
+    /**
+     * @brief Reads the up/down state of the test head.
+     * @return 1 for up, 0 for down.
+     */
     int getHeadState();
+
+    /**
+     * @brief Turns the main nozzle air flow ON.
+     */
     void setFlowOn();
+
+    /**
+     * @brief Turns the main nozzle air flow OFF.
+     */
     void setFlowOff();
+
+    /**
+     * @brief Sets the main nozzle air flow rate.
+     * @param scfm The flow rate in scfm (4-25).
+     */
     void setFlowRate(int scfm);
+
+    /**
+     * @brief Reads the desired main nozzle air flow rate setting.
+     * @return The flow rate setting in scfm.
+     */
     int getFlowRateSetting();
+
+    /**
+     * @brief Reads the measured main nozzle air flow rate.
+     * @return The measured flow rate in scfm.
+     */
     int getFlowRateMeasured();
+
+    /**
+     * @brief Turns DUT control mode ON.
+     */
     void setDutControlModeOn();
+
+    /**
+     * @brief Turns AIR control mode ON (by turning DUT mode OFF).
+     */
     void setDutControlModeOff();
+
+    /**
+     * @brief Reads the DUT mode ON/OFF state.
+     * @return 1 for ON, 0 for OFF.
+     */
     int getDutControlMode();
+
+    /**
+     * @brief Sets the DUT sensor type.
+     * @param type The sensor type (0-4).
+     */
     void setDutSensorType(int type);
+
+    /**
+     * @brief Reads the DUT sensor type.
+     * @return The sensor type (0-4).
+     */
     int getDutSensorType();
+
+    /**
+     * @brief Turns trickle flow ON.
+     */
     void setTrickleFlowOn();
+
+    /**
+     * @brief Turns trickle flow OFF.
+     */
     void setTrickleFlowOff();
+
+    /**
+     * @brief Reads the setting of trickle flow.
+     * @return 1 for ON, 0 for OFF.
+     */
     int getTrickleFlowState();
+
+    /**
+     * @brief Sets the lower air temperature limit.
+     * @param limit The lower limit in degrees Celsius.
+     */
     void setLowerTemperatureLimit(double limit);
+
+    /**
+     * @brief Sets the upper air temperature limit.
+     * @param limit The upper limit in degrees Celsius.
+     */
     void setUpperTemperatureLimit(double limit);
+
+    /**
+     * @brief Reads the system error state.
+     * @return A bit-masked integer representing the error state.
+     */
     int getErrorState();
 
     struct Commands {
