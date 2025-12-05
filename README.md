@@ -89,6 +89,7 @@ void manual_example(const std::string& resource_address) {
 
     // 2. Set the resource and connect manually.
     psu.setResource(resource_address);
+    psu.setResource(resource_address);
     psu.setTimeout(5000);
     psu.connect();
 

@@ -79,7 +79,11 @@ When tasked with adding support for a new instrument (e.g., a "Keysight E3631A P
 Create a new header (`.hpp`) and source (`.cpp`) file for your driver inside the `src/drivers/` directory. For example: `KeysightE3631A.hpp` and `KeysightE3631A.cpp`.
 
 ### 2. Define the Driver Class and Commands
+Create a new header (`.hpp`) and source (`.cpp`) file for your driver inside the `src/drivers/` directory. For example: `KeysightE3631A.hpp` and `KeysightE3631A.cpp`.
 
+### 2. Define the Driver Class and Commands
+
+In the header file, define your new class. It must inherit from `cvisa::drivers::InstrumentDriver` and include a public nested `struct` named `Commands`.
 In the header file, define your new class. It must inherit from `cvisa::drivers::InstrumentDriver` and include a public nested `struct` named `Commands`.
 
 *   The `Commands` struct must contain a `static` method for every SCPI command the driver supports. Each method must return a `CommandSpec` object. This approach provides compile-time safety and enables IDE autocompletion in a C++11 compliant way.
@@ -125,6 +129,7 @@ public:
 ```
 
 ### 3. Implement the Public Methods
+### 3. Implement the Public Methods
 
 In the source file (`.cpp`), implement the driver's public methods.
 *   For `WRITE` commands, use the `executeCommand` helper.
@@ -156,6 +161,7 @@ double KeysightE3631A::measureCurrent() {
 Add your new source files to the `cvisa` library target in the main `CMakeLists.txt`.
 
 ```cmake
+# In CMakeLists.txt
 # In CMakeLists.txt
 add_library(cvisa
     # ...

@@ -12,7 +12,8 @@
         "future": "cpp",
         "thread": "cpp",
         "__tree": "cpp",
-        "locale": "cpp"
+        "locale": "cpp",
+        "map": "cpp"
     },
     
 }
