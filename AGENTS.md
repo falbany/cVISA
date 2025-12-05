@@ -24,9 +24,9 @@ find src examples -name "*.hpp" -o -name "*.cpp" | xargs clang-format -i
 
 The library includes a flexible, static logging engine in `src/core/Logger.hpp`.
 
-*   **Static Class:** The `Logger` is a static class, so you can call its methods directly (e.g., `cvisa::Logger::log(...)`) without needing an instance.
-*   **Multiple Sinks:** The logger supports writing to multiple output streams (or "sinks") simultaneously. You can add any `std::ostream` object as a sink, such as `std::cout` or a file stream.
-*   **Verbosity Levels:** Logging is controlled by a `LogLevel` enum. Messages will only be written if their level is less than or equal to the active verbosity level set on the `VisaInterface` or `InstrumentDriver` instance.
+- **Static Class:** The `Logger` is a static class, so you can call its methods directly (e.g., `cvisa::Logger::log(...)`) without needing an instance.
+- **Multiple Sinks:** The logger supports writing to multiple output streams (or "sinks") simultaneously. You can add any `std::ostream` object as a sink, such as `std::cout` or a file stream.
+- **Verbosity Levels:** Logging is controlled by a `LogLevel` enum. Messages will only be written if their level is less than or equal to the active verbosity level set on the `VisaInterface` or `InstrumentDriver` instance.
 
 ### How to Use the Logger
 
@@ -79,6 +79,7 @@ When tasked with adding support for a new instrument (e.g., a "Keysight E3631A P
 Create a new header (`.hpp`) and source (`.cpp`) file for your driver inside the `src/drivers/` directory. For example: `KeysightE3631A.hpp` and `KeysightE3631A.cpp`.
 
 ### 2. Define the Driver Class and Commands
+
 Create a new header (`.hpp`) and source (`.cpp`) file for your driver inside the `src/drivers/` directory. For example: `KeysightE3631A.hpp` and `KeysightE3631A.cpp`.
 
 ### 2. Define the Driver Class and Commands
@@ -86,9 +87,9 @@ Create a new header (`.hpp`) and source (`.cpp`) file for your driver inside the
 In the header file, define your new class. It must inherit from `cvisa::drivers::InstrumentDriver` and include a public nested `struct` named `Commands`.
 In the header file, define your new class. It must inherit from `cvisa::drivers::InstrumentDriver` and include a public nested `struct` named `Commands`.
 
-*   The `Commands` struct must contain a `static` method for every SCPI command the driver supports. Each method must return a `CommandSpec` object. This approach provides compile-time safety and enables IDE autocompletion in a C++11 compliant way.
-*   For `QUERY` commands, you must specify the `ResponseType` in the `CommandSpec` constructor.
-*   The driver should expose overloaded constructors that mirror the base class to support both RAII-style and manual connections.
+- The `Commands` struct must contain a `static` method for every SCPI command the driver supports. Each method must return a `CommandSpec` object. This approach provides compile-time safety and enables IDE autocompletion in a C++11 compliant way.
+- For `QUERY` commands, you must specify the `ResponseType` in the `CommandSpec` constructor.
+- The driver should expose overloaded constructors that mirror the base class to support both RAII-style and manual connections.
 
 ```cpp
 // In KeysightE3631A.hpp
@@ -129,12 +130,14 @@ public:
 ```
 
 ### 3. Implement the Public Methods
+
 ### 3. Implement the Public Methods
 
 In the source file (`.cpp`), implement the driver's public methods.
-*   For `WRITE` commands, use the `executeCommand` helper.
-*   For `QUERY` commands, use the `queryAndParse<T>()` helper, where `T` is the C++ type corresponding to the `ResponseType` defined in the `CommandSpec`.
-*   Remember to call the static command methods with parentheses, e.g., `Commands::SET_VOLTAGE()`.
+
+- For `WRITE` commands, use the `executeCommand` helper.
+- For `QUERY` commands, use the `queryAndParse<T>()` helper, where `T` is the C++ type corresponding to the `ResponseType` defined in the `CommandSpec`.
+- Remember to call the static command methods with parentheses, e.g., `Commands::SET_VOLTAGE()`.
 
 ```cpp
 // In KeysightE3631A.cpp
@@ -173,8 +176,8 @@ add_library(cvisa
 
 To ensure all drivers are complete and maintainable, every new instrument driver **must** include the following:
 
-*   **Doxygen Comments:** The driver's class and all public methods must be documented with clear Doxygen comments explaining their purpose, parameters, and return values.
-*   **Dedicated Example:** A new example file (e.g., `examples/keysight_e3631a_usage.cpp`) must be created to demonstrate how to connect to and use the new driver.
-*   **Changelog Entry:** A new entry must be added to the `CHANGELOG.md` file under the "Added" section, documenting the addition of the new driver.
+- **Doxygen Comments:** The driver's class and all public methods must be documented with clear Doxygen comments explaining their purpose, parameters, and return values.
+- **Dedicated Example:** A new example file (e.g., `examples/keysight_e3631a_usage.cpp`) must be created to demonstrate how to connect to and use the new driver.
+- **Changelog Entry:** A new entry must be added to the `CHANGELOG.md` file under the "Added" section, documenting the addition of the new driver.
 
 By following this pattern, you ensure that new drivers are easy to create, read, and maintain, and that the core library remains clean and reusable.

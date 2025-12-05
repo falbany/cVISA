@@ -63,6 +63,11 @@ namespace cvisa {
         m_resourceName = resourceName;
     }
 
+    void VisaInterface::connect(const std::string& resourceName) {
+        setResource(resourceName);
+        connect();
+    }
+
     void VisaInterface::connect() {
         if (isConnected()) {
             Logger::log(m_logLevel, LogLevel::INFO, m_resourceName, "Connect called but already connected.");

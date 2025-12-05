@@ -13,7 +13,8 @@
         "thread": "cpp",
         "__tree": "cpp",
         "locale": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "iostream": "cpp"
     },
     
 }

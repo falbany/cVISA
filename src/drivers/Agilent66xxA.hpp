@@ -35,8 +35,7 @@ namespace cvisa {
             /**
              * @brief Constructs and connects with resource name only.
              */
-            explicit Agilent66xxA(const std::string& resourceName)
-                : InstrumentDriver(resourceName, "Agilent/Keysight 66xxA Series Power Supply") {}
+            explicit Agilent66xxA(const std::string& resourceName) : InstrumentDriver(resourceName, "Agilent/Keysight 66xxA Series Power Supply") {}
 
             /**
              * @brief Constructs and connects with timeout and read termination.
@@ -194,35 +193,28 @@ namespace cvisa {
              */
             double getTriggeredCurrent();
 
-
             // --- Command Definitions ---
             struct Commands {
                 // --- Output Commands ---
                 static CommandSpec SET_VOLTAGE() {
-                    return CommandSpec("SOURCE:VOLTAGE:LEVEL:IMMEDIATE:AMPLITUDE %f", CommandType::WRITE, ResponseType::NONE, 0,
-                                       "Set output voltage.");
+                    return CommandSpec("SOURCE:VOLTAGE:LEVEL:IMMEDIATE:AMPLITUDE %f", CommandType::WRITE, ResponseType::NONE, 0, "Set output voltage.");
                 }
                 static CommandSpec GET_VOLTAGE_SET() {
-                    return CommandSpec("SOURCE:VOLTAGE:LEVEL:IMMEDIATE:AMPLITUDE?", CommandType::QUERY, ResponseType::DOUBLE, 0,
-                                       "Get output voltage setting.");
+                    return CommandSpec("SOURCE:VOLTAGE:LEVEL:IMMEDIATE:AMPLITUDE?", CommandType::QUERY, ResponseType::DOUBLE, 0, "Get output voltage setting.");
                 }
                 static CommandSpec MEAS_VOLTAGE() {
                     return CommandSpec("MEASURE:VOLTAGE:DC?", CommandType::QUERY, ResponseType::DOUBLE, 50, "Measure voltage.");
                 }
                 static CommandSpec SET_CURRENT() {
-                    return CommandSpec("SOURCE:CURRENT:LEVEL:IMMEDIATE:AMPLITUDE %f", CommandType::WRITE, ResponseType::NONE, 0,
-                                       "Set output current.");
+                    return CommandSpec("SOURCE:CURRENT:LEVEL:IMMEDIATE:AMPLITUDE %f", CommandType::WRITE, ResponseType::NONE, 0, "Set output current.");
                 }
                 static CommandSpec GET_CURRENT_SET() {
-                    return CommandSpec("SOURCE:CURRENT:LEVEL:IMMEDIATE:AMPLITUDE?", CommandType::QUERY, ResponseType::DOUBLE, 0,
-                                       "Get output current setting.");
+                    return CommandSpec("SOURCE:CURRENT:LEVEL:IMMEDIATE:AMPLITUDE?", CommandType::QUERY, ResponseType::DOUBLE, 0, "Get output current setting.");
                 }
                 static CommandSpec MEAS_CURRENT() {
                     return CommandSpec("MEASURE:CURRENT:DC?", CommandType::QUERY, ResponseType::DOUBLE, 50, "Measure current.");
                 }
-                static CommandSpec SET_OUTPUT() {
-                    return CommandSpec("OUTPUT:STATE %s", CommandType::WRITE, ResponseType::NONE, 0, "Set output state.");
-                }
+                static CommandSpec SET_OUTPUT() { return CommandSpec("OUTPUT:STATE %s", CommandType::WRITE, ResponseType::NONE, 0, "Set output state."); }
                 static CommandSpec GET_OUTPUT_STATE() {
                     return CommandSpec("OUTPUT:STATE?", CommandType::QUERY, ResponseType::BOOLEAN, 0, "Get output state.");
                 }
@@ -268,9 +260,7 @@ namespace cvisa {
                 static CommandSpec SET_TRIGGER_SOURCE_BUS() {
                     return CommandSpec("TRIGGER:SOURCE BUS", CommandType::WRITE, ResponseType::NONE, 0, "Set trigger source to bus.");
                 }
-                static CommandSpec TRIGGER() {
-                    return CommandSpec("TRIGGER:IMMEDIATE", CommandType::WRITE, ResponseType::NONE, 0, "Generate a trigger.");
-                }
+                static CommandSpec TRIGGER() { return CommandSpec("TRIGGER:IMMEDIATE", CommandType::WRITE, ResponseType::NONE, 0, "Generate a trigger."); }
                 static CommandSpec SET_TRIGGERED_VOLTAGE() {
                     return CommandSpec("SOURCE:VOLTAGE:LEVEL:TRIGGERED:AMPLITUDE %f", CommandType::WRITE, ResponseType::NONE, 0,
                                        "Set triggered voltage level.");

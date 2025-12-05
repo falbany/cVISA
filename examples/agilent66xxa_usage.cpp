@@ -14,8 +14,23 @@ int main() {
     std::cout << "Description: " << psu.getDescription() << std::endl;
 
     try {
+
+        // The driver will automatically connect when the resource name is set.
+        // The destructor will automatically disconnect.
+
+        // Ask the user for the ressource name, guided by available resources.
+        std::vector<std::string> resources = cvisa::VisaInterface::findResources();
+        std::cout << "Available VISA Resources:" << std::endl;
+        for (const auto& res : resources) {
+            std::cout << "  - " << res << std::endl;
+        }
+
+        std::cout << "Enter the VISA resource name of the Agilent/Keysight 66xxA power supply: ";
+        std::getline(std::cin, resourceName);
+
         // --- Connection ---
         std::cout << "\nConnecting to " << resourceName << "..." << std::endl;
+
         psu.connect(resourceName);
 
         // --- Basic Operations ---
@@ -52,24 +67,10 @@ int main() {
 
         // --- Trigger System Example ---
         std::cout << "\nConfiguring trigger system..." << std::endl;
-        psu.setTriggerSource(cvisa::drivers::Agilent66xxA::TriggerSource::BUS);
+        psu.setTriggerSourceBus();
         std::cout << "Trigger source set to BUS." << std::endl;
         psu.trigger();
         std::cout << "Software trigger sent." << std::endl;
-
-        // --- Remote Sensing ---
-        // Note: Remote sensing requires specific wiring. This just checks the state.
-        std::cout << "\nChecking remote sense..." << std::endl;
-        std::cout << "Remote sensing is " << (psu.isRemoteSensingEnabled() ? "enabled" : "disabled") << std::endl;
-
-        // --- Error Checking ---
-        std::cout << "\nChecking for instrument errors..." << std::endl;
-        std::string errors = psu.checkForErrors();
-        if (errors.find("+0") != std::string::npos) {
-            std::cout << "No errors found on instrument." << std::endl;
-        } else {
-            std::cout << "Found errors: " << errors << std::endl;
-        }
 
         // --- Shutdown ---
         std::cout << "\nShutting down..." << std::endl;

@@ -62,25 +62,122 @@ namespace cvisa {
      */
         explicit VisaInterface(const std::string& resourceName, unsigned int timeout_ms, char read_termination);
 
+        /**
+         * @brief Destructor. Disconnects from the instrument if connected.
+         */
         virtual ~VisaInterface();
 
         // --- Rule of Five: Move semantics enabled, copy semantics disabled ---
-        VisaInterface(const VisaInterface&)            = delete;
+        VisaInterface(const VisaInterface&) = delete;
         VisaInterface& operator=(const VisaInterface&) = delete;
+
+        /**
+         * @brief Move constructor.
+         *
+         * Transfers ownership of the VISA session from another `VisaInterface`
+         * object. The other object is left in a disconnected, but valid, state.
+         *
+         * @param other The object to move from.
+         */
         VisaInterface(VisaInterface&& other) noexcept;
+
+        /**
+         * @brief Move assignment operator.
+         *
+         * Transfers ownership of the VISA session from another `VisaInterface`
+         * object. The other object is left in a disconnected, but valid, state.
+         *
+         * @param other The object to move from.
+         * @return A reference to this object.
+         */
         VisaInterface& operator=(VisaInterface&& other) noexcept;
 
         // --- Configuration ---
+        /**
+         * @brief Sets the VISA resource name for the instrument.
+         *
+         * This can only be done when the interface is disconnected.
+         *
+         * @param resourceName The VISA resource string (e.g., "GPIB0::1::INSTR").
+         * @throws ConnectionException if the interface is already connected.
+         */
         virtual void setResource(const std::string& resourceName);
+
+        /**
+         * @brief Sets the communication timeout for VISA operations.
+         *
+         * This value is applied to the instrument immediately if connected, or
+         * during the next `connect()` call.
+         *
+         * @param timeout_ms The timeout in milliseconds.
+         */
         virtual void setTimeout(unsigned int timeout_ms);
+
+        /**
+         * @brief Configures the character used to terminate read operations.
+         *
+         * This value is applied to the instrument immediately if connected, or
+         * during the next `connect()` call.
+         *
+         * @param term_char The termination character.
+         * @param enable If true, read termination is enabled; otherwise, it's
+         * disabled.
+         */
         virtual void setReadTermination(char term_char, bool enable = true);
+        /**
+         * @brief Configures the character to be appended to every write operation.
+         *
+         * @param term_char The termination character to append to writes.
+         */
         virtual void setWriteTermination(char term_char);
+
+        /**
+         * @brief Sets the verbosity level for logging.
+         * @param level The desired logging level.
+         */
         virtual void setVerbose(LogLevel level);
+
+        /**
+         * @brief Enables or disables automatic instrument error checking.
+         *
+         * When enabled, the driver will query the instrument's error queue
+         * (SYST:ERR?) after every `write` or `query` operation and throw an
+         * exception if an error is reported.
+         *
+         * @param enable True to enable automatic error checking, false to disable.
+         */
         virtual void enableAutoErrorCheck(bool enable);
 
         // --- Manual Connection Management ---
+        /**
+         * @brief Manually establishes a connection to the instrument.
+         *
+         * A resource name must have been set via `setResource()` or the constructor
+         * prior to calling this.
+         *
+         * @throws ConnectionException if no resource name is set or if connection
+         * fails.
+         */
         void connect();
+
+        /**
+         * @brief Sets the resource name and immediately connects.
+         * @param resourceName The VISA resource string.
+         * @throws ConnectionException if connection fails.
+         */
+        void connect(const std::string& resourceName);
+
+        /**
+         * @brief Disconnects from the instrument.
+         *
+         * Safe to call even if already disconnected.
+         */
         void disconnect();
+
+        /**
+         * @brief Checks if the interface is currently connected to an instrument.
+         * @return True if connected, false otherwise.
+         */
         bool isConnected() const;
 
         // --- Core I/O Operations ---

@@ -62,7 +62,11 @@
             "map": "cpp"
         },
         "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-        "cmake.configureOnOpen": true
+        "cmake.configureOnOpen": true,
+        "cSpell.words": [
+            "cvisa",
+            "overvoltage"
+        ]
     },
     "launch": {
         "version": "0.2.0",

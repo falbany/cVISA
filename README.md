@@ -4,17 +4,17 @@
 
 ## Key Features
 
-*   **C++11 Compliant:** The library is fully compatible with the C++11 standard.
-*   **Flexible Connection Management:** Constructor overloading allows for both simple, one-line RAII-style connections (by providing a resource string) and manual control over the VISA session (by using the default constructor).
-*   **Simple Inheritance Model:** High-level drivers inherit directly from the core communication class, making the API intuitive and easy to use.
-*   **Asynchronous Operations:** Perform non-blocking queries using `std::future` for building responsive applications.
-*   **Object-Oriented & RAII-Compliant:** Manages VISA sessions automatically. The driver's constructor and destructor handle `viOpen` and `viClose`, preventing resource leaks.
-*   **Formatted Logging:** The logging engine provides formatted, contextual output including timestamps, log levels, and instrument resource names.
-*   **Robust Error Handling:** Includes a comprehensive exception hierarchy and an optional automatic instrument error checking feature to catch hardware-level errors.
-*   **Automatic Response Parsing:** The command engine can automatically parse instrument responses into C++ types (`double`, `int`, `bool`), reducing boilerplate and improving safety.
-*   **Declarative, Data-Driven Drivers:** Implement instrument-specific drivers by defining their SCPI command sets as simple data.
-*   **Reusable Abstraction Layer:** A clean `InstrumentDriver` base class provides a shared command execution engine for all drivers.
-*   **Modern Build System:** Uses CMake for easy integration into cross-platform projects.
+- **C++11 Compliant:** The library is fully compatible with the C++11 standard.
+- **Flexible Connection Management:** Constructor overloading allows for both simple, one-line RAII-style connections (by providing a resource string) and manual control over the VISA session (by using the default constructor).
+- **Simple Inheritance Model:** High-level drivers inherit directly from the core communication class, making the API intuitive and easy to use.
+- **Asynchronous Operations:** Perform non-blocking queries using `std::future` for building responsive applications.
+- **Object-Oriented & RAII-Compliant:** Manages VISA sessions automatically. The driver's constructor and destructor handle `viOpen` and `viClose`, preventing resource leaks.
+- **Formatted Logging:** The logging engine provides formatted, contextual output including timestamps, log levels, and instrument resource names.
+- **Robust Error Handling:** Includes a comprehensive exception hierarchy and an optional automatic instrument error checking feature to catch hardware-level errors.
+- **Automatic Response Parsing:** The command engine can automatically parse instrument responses into C++ types (`double`, `int`, `bool`), reducing boilerplate and improving safety.
+- **Declarative, Data-Driven Drivers:** Implement instrument-specific drivers by defining their SCPI command sets as simple data.
+- **Reusable Abstraction Layer:** A clean `InstrumentDriver` base class provides a shared command execution engine for all drivers.
+- **Modern Build System:** Uses CMake for easy integration into cross-platform projects.
 
 ## Architecture: Simple and Extensible
 
