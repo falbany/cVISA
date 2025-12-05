@@ -1,65 +1,67 @@
 #include "Agilent66xxA.hpp"
 
+#include "../core/exceptions.hpp"
+
 #include <stdexcept>
 #include <string>
 
-#include "../exceptions.hpp"
-
 namespace cvisa {
-namespace drivers {
+    namespace drivers {
 
-// --- Helper for parsing string responses to double ---
-namespace {
-double parse_double(const std::string& response, const std::string& context) {
-    try {
-        return std::stod(response);
-    } catch (const std::invalid_argument&) {
-        throw CommandException(
-            "Failed to parse double from instrument response for " + context +
-            ". Response: " + response);
-    }
-}
-}  // namespace
+        // --- Output Subsystem ---
+        void Agilent66xxA::setVoltage(double voltage) { executeCommand(Commands::SET_VOLTAGE(), voltage); }
 
-// --- Public API ---
-// All methods now use the static constexpr command definitions.
+        double Agilent66xxA::getVoltageSetting() { return queryAndParse<double>(Commands::GET_VOLTAGE_SET()); }
 
-void Agilent66xxA::setVoltage(double voltage) {
-    executeCommand(Commands::SET_VOLTAGE, voltage);
-}
+        double Agilent66xxA::measureVoltage() { return queryAndParse<double>(Commands::MEAS_VOLTAGE()); }
 
-double Agilent66xxA::getVoltageSetting() {
-    std::string response = executeCommand(Commands::GET_VOLTAGE_SET);
-    return parse_double(response, "getVoltageSetting");
-}
+        void Agilent66xxA::setCurrent(double current) { executeCommand(Commands::SET_CURRENT(), current); }
 
-double Agilent66xxA::measureVoltage() {
-    std::string response = executeCommand(Commands::MEAS_VOLTAGE);
-    return parse_double(response, "measureVoltage");
-}
+        double Agilent66xxA::getCurrentSetting() { return queryAndParse<double>(Commands::GET_CURRENT_SET()); }
 
-void Agilent66xxA::setCurrent(double current) {
-    executeCommand(Commands::SET_CURRENT, current);
-}
+        double Agilent66xxA::measureCurrent() { return queryAndParse<double>(Commands::MEAS_CURRENT()); }
 
-double Agilent66xxA::getCurrentSetting() {
-    std::string response = executeCommand(Commands::GET_CURRENT_SET);
-    return parse_double(response, "getCurrentSetting");
-}
+        void Agilent66xxA::setOutput(bool enabled) { executeCommand(Commands::SET_OUTPUT(), enabled ? "ON" : "OFF"); }
 
-double Agilent66xxA::measureCurrent() {
-    std::string response = executeCommand(Commands::MEAS_CURRENT);
-    return parse_double(response, "measureCurrent");
-}
+        bool Agilent66xxA::isOutputEnabled() { return queryAndParse<bool>(Commands::GET_OUTPUT_STATE()); }
 
-void Agilent66xxA::setOutput(bool enabled) {
-    executeCommand(Commands::SET_OUTPUT, enabled ? "ON" : "OFF");
-}
+        void Agilent66xxA::clearProtection() { executeCommand(Commands::CLEAR_PROTECTION()); }
 
-bool Agilent66xxA::isOutputEnabled() {
-    std::string response = executeCommand(Commands::GET_OUTPUT_STATE);
-    return response.find('1') != std::string::npos;
-}
+        // --- Over-Voltage Protection ---
+        void Agilent66xxA::setOverVoltageProtection(double level) { executeCommand(Commands::SET_OVP(), level); }
 
-}  // namespace drivers
-}  // namespace cvisa
+        double Agilent66xxA::getOverVoltageProtection() { return queryAndParse<double>(Commands::GET_OVP()); }
+
+        // --- Over-Current Protection ---
+        void Agilent66xxA::setOverCurrentProtection(bool enabled) { executeCommand(Commands::SET_OCP(), enabled ? "ON" : "OFF"); }
+
+        bool Agilent66xxA::isOverCurrentProtectionEnabled() { return queryAndParse<bool>(Commands::GET_OCP()); }
+
+        // --- Display Subsystem ---
+        void Agilent66xxA::setDisplayEnabled(bool enabled) { executeCommand(Commands::SET_DISPLAY_ENABLED(), enabled ? "ON" : "OFF"); }
+
+        bool Agilent66xxA::isDisplayEnabled() { return queryAndParse<bool>(Commands::GET_DISPLAY_ENABLED()); }
+
+        void Agilent66xxA::displayText(const std::string& text) { executeCommand(Commands::DISPLAY_TEXT(), text.c_str()); }
+
+        std::string Agilent66xxA::getDisplayText() { return queryAndParse<std::string>(Commands::GET_DISPLAY_TEXT()); }
+
+        // --- Trigger Subsystem ---
+        void Agilent66xxA::initiate() { executeCommand(Commands::INITIATE()); }
+
+        void Agilent66xxA::abort() { executeCommand(Commands::ABORT()); }
+
+        void Agilent66xxA::setTriggerSourceBus() { executeCommand(Commands::SET_TRIGGER_SOURCE_BUS()); }
+
+        void Agilent66xxA::trigger() { executeCommand(Commands::TRIGGER()); }
+
+        void Agilent66xxA::setTriggeredVoltage(double voltage) { executeCommand(Commands::SET_TRIGGERED_VOLTAGE(), voltage); }
+
+        double Agilent66xxA::getTriggeredVoltage() { return queryAndParse<double>(Commands::GET_TRIGGERED_VOLTAGE()); }
+
+        void Agilent66xxA::setTriggeredCurrent(double current) { executeCommand(Commands::SET_TRIGGERED_CURRENT(), current); }
+
+        double Agilent66xxA::getTriggeredCurrent() { return queryAndParse<double>(Commands::GET_TRIGGERED_CURRENT()); }
+
+    }    // namespace drivers
+}    // namespace cvisa

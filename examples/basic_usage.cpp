@@ -1,27 +1,24 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
-#include <sstream>  // Required for std::stringstream
+#include <sstream>    // Required for std::stringstream
 #include <string>
 #include <thread>
 #include <vector>
 
 // Core cvisa includes
-#include "VisaInterface.hpp"  // Needed for findResources and logging
-#include "drivers/Agilent66xxA.hpp"
-#include "exceptions.hpp"
+#include "src/core/VisaInterface.hpp"    // Needed for findResources and logging
+#include "src/core/exceptions.hpp"
+#include "src/drivers/Agilent66xxA.hpp"
 
-void print_separator() {
-    std::cout << "----------------------------------------" << std::endl;
-}
+void print_separator() { std::cout << "----------------------------------------" << std::endl; }
 
 /**
  * @brief Demonstrates the simple, constructor-based (RAII) connection
  * workflow.
  */
 void run_raii_example(const std::string& resource_address) {
-    std::cout << "--- Running RAII (Constructor-based) Example ---"
-              << std::endl;
+    std::cout << "--- Running RAII (Constructor-based) Example ---" << std::endl;
     // 1. Instantiate the driver directly with the resource string.
     // This single step creates the object and opens the VISA session.
     // The default log level is WARNING.
@@ -32,6 +29,13 @@ void run_raii_example(const std::string& resource_address) {
     // operations on this specific instance.
     psu.setVerbose(cvisa::LogLevel::DEBUG);
     std::cout << "\nLog level for this instance set to DEBUG.\n" << std::endl;
+
+    // --- Demonstrate Automatic Instrument Error Checking ---
+    // Enable this feature to automatically query the instrument's error queue
+    // after every command. If the instrument reports an error, an
+    // InstrumentException will be thrown.
+    psu.enableAutoErrorCheck(true);
+    std::cout << "Automatic instrument error checking enabled.\n" << std::endl;
 
     std::cout << "Driver initialized and connection successful." << std::endl;
     print_separator();
@@ -45,10 +49,8 @@ void run_raii_example(const std::string& resource_address) {
     psu.setVoltage(5.0);
     psu.setCurrent(0.5);
     psu.setOutput(true);
-    std::cout << "-> Voltage set to " << psu.getVoltageSetting() << " V"
-              << std::endl;
-    std::cout << "-> Current set to " << psu.getCurrentSetting() << " A"
-              << std::endl;
+    std::cout << "-> Voltage set to " << psu.getVoltageSetting() << " V" << std::endl;
+    std::cout << "-> Current set to " << psu.getCurrentSetting() << " A" << std::endl;
     std::cout << "-> Output enabled." << std::endl;
     print_separator();
 
@@ -56,8 +58,7 @@ void run_raii_example(const std::string& resource_address) {
     // out of scope.
     std::cout << "Disabling output." << std::endl;
     psu.setOutput(false);
-    std::cout << "RAII example finished. Destructor will now disconnect."
-              << std::endl;
+    std::cout << "RAII example finished. Destructor will now disconnect." << std::endl;
 }
 
 /**
@@ -82,8 +83,7 @@ void run_manual_example(const std::string& resource_address) {
 
     std::cout << "Attempting to connect manually..." << std::endl;
     psu.connect();
-    std::cout << "Manual connection successful: " << std::boolalpha
-              << psu.isConnected() << std::endl;
+    std::cout << "Manual connection successful: " << std::boolalpha << psu.isConnected() << std::endl;
     print_separator();
 
     // 3. Use the driver's high-level methods.
@@ -95,8 +95,7 @@ void run_manual_example(const std::string& resource_address) {
     // 4. Manually disconnect from the instrument.
     std::cout << "Attempting to disconnect manually..." << std::endl;
     psu.disconnect();
-    std::cout << "Manual disconnection successful: " << std::boolalpha
-              << !psu.isConnected() << std::endl;
+    std::cout << "Manual disconnection successful: " << std::boolalpha << !psu.isConnected() << std::endl;
     std::cout << "Manual example finished." << std::endl;
 }
 
@@ -104,8 +103,7 @@ int main() {
     // --- Demonstrate logging to a string stream ---
     std::stringstream log_stream;
     cvisa::Logger::setOutputStream(&log_stream);
-    std::cout << "Log output has been redirected to an in-memory string stream."
-              << std::endl;
+    std::cout << "Log output has been redirected to an in-memory string stream." << std::endl;
     print_separator();
 
     try {
@@ -122,8 +120,7 @@ int main() {
             return 1;
         }
 
-        std::cout << "Found " << resources.size()
-                  << " instrument(s):" << std::endl;
+        std::cout << "Found " << resources.size() << " instrument(s):" << std::endl;
         for (const auto& resource : resources) {
             std::cout << "  - " << resource << std::endl;
         }

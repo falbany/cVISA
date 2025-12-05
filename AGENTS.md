@@ -20,29 +20,74 @@ find src examples -name "*.hpp" -o -name "*.cpp" | xargs clang-format -i
 
 ---
 
+## Logging Engine
+
+The library includes a flexible, static logging engine in `src/core/Logger.hpp`.
+
+*   **Static Class:** The `Logger` is a static class, so you can call its methods directly (e.g., `cvisa::Logger::log(...)`) without needing an instance.
+*   **Multiple Sinks:** The logger supports writing to multiple output streams (or "sinks") simultaneously. You can add any `std::ostream` object as a sink, such as `std::cout` or a file stream.
+*   **Verbosity Levels:** Logging is controlled by a `LogLevel` enum. Messages will only be written if their level is less than or equal to the active verbosity level set on the `VisaInterface` or `InstrumentDriver` instance.
+
+### How to Use the Logger
+
+You can add and remove logging destinations at any time.
+
+```cpp
+#include "src/core/Logger.hpp"
+#include <iostream>
+#include <fstream>
+
+// Create a log file
+std::ofstream logfile("cvisa_log.txt");
+
+// Add std::cout as a logging destination
+cvisa::Logger::addSink(std::cout);
+
+// Add the log file as another destination
+cvisa::Logger::addSink(logfile);
+
+// ... your cvisa code ...
+
+// To clear all logging destinations:
+cvisa::Logger::clearSinks();
+```
+
+---
+
 ## Core Architecture
 
 The library is built on a simple inheritance-based architecture:
 
-1.  **Low-Level VISA Wrapper (`VisaInterface`):** This is the foundational class that directly wraps the VISA C API. It is a direct, RAII-compliant wrapper that handles the low-level details of opening, closing, reading from, and writing to an instrument. It should *not* contain any instrument-specific logic.
+1.  **Low-Level VISA Wrapper (`VisaInterface`):** This is the foundational class that directly wraps the VISA C API. It is a direct, RAII-compliant wrapper that handles the low-level details of opening, closing, reading from, and writing to an instrument.
 
-2.  **High-Level Driver Abstraction (`InstrumentDriver`):** This class inherits from `VisaInterface`, gaining all of its I/O capabilities. It provides shared functionality for all drivers, most importantly the `executeCommand` helper function, which centralizes the logic for executing SCPI commands defined as data.
+2.  **High-Level Driver Abstraction (`InstrumentDriver`):** This class inherits from `VisaInterface`, gaining all of its I/O capabilities. It provides shared functionality for all drivers, including a command execution engine and an automatic response parsing system.
 
 3.  **Specific Drivers (e.g., `Agilent66xxA`):** A specific driver inherits from `InstrumentDriver`. Its primary responsibility is to define its unique SCPI command set in a public, nested `Commands` struct and provide high-level public methods for instrument control.
 
+## Automatic Instrument Error Checking
+
+The `InstrumentDriver` base class includes an optional feature to automatically check for instrument errors after every command. This is controlled by the `enableAutoErrorCheck(bool)` method. When enabled, it sends a `SYST:ERR?` query after each command and throws an `InstrumentException` if the instrument reports an error.
+
+This feature is **disabled by default**. It is recommended to enable it during development and debugging.
+
 ## How to Add a New Instrument Driver
 
-When tasked with adding support for a new instrument (e.g., a "Keysight E3631A Power Supply"), you **must** follow this pattern.
+When tasked with adding support for a new instrument (e.g., a "Keysight E3631A Power Supply"), you **must** follow this C++11 compliant pattern.
 
 ### 1. Create the Driver Files
 
 Create a new header (`.hpp`) and source (`.cpp`) file for your driver inside the `src/drivers/` directory. For example: `KeysightE3631A.hpp` and `KeysightE3631A.cpp`.
 
 ### 2. Define the Driver Class and Commands
+Create a new header (`.hpp`) and source (`.cpp`) file for your driver inside the `src/drivers/` directory. For example: `KeysightE3631A.hpp` and `KeysightE3631A.cpp`.
+
+### 2. Define the Driver Class and Commands
 
 In the header file, define your new class. It must inherit from `cvisa::drivers::InstrumentDriver` and include a public nested `struct` named `Commands`.
+In the header file, define your new class. It must inherit from `cvisa::drivers::InstrumentDriver` and include a public nested `struct` named `Commands`.
 
-*   The `Commands` struct must contain a `static constexpr CommandSpec` for every SCPI command the driver supports. This approach provides compile-time safety and enables IDE autocompletion.
+*   The `Commands` struct must contain a `static` method for every SCPI command the driver supports. Each method must return a `CommandSpec` object. This approach provides compile-time safety and enables IDE autocompletion in a C++11 compliant way.
+*   For `QUERY` commands, you must specify the `ResponseType` in the `CommandSpec` constructor.
 *   The driver should expose overloaded constructors that mirror the base class to support both RAII-style and manual connections.
 
 ```cpp
@@ -56,7 +101,6 @@ namespace cvisa::drivers {
 class KeysightE3631A : public InstrumentDriver {
 public:
     // --- Constructors ---
-    // Mirror the base class constructors to allow flexible connection styles.
     KeysightE3631A() = default;
     explicit KeysightE3631A(const std::string& resourceName)
         : InstrumentDriver(resourceName) {}
@@ -65,16 +109,18 @@ public:
         : InstrumentDriver(resourceName, timeout_ms, read_termination) {}
 
     // --- Public API ---
-    // Define the high-level methods for this instrument.
     void setVoltage(double voltage);
     double measureCurrent();
     // ... etc.
 
     // --- Command Definitions ---
-    // Use a public nested struct to hold all command specifications.
     struct Commands {
-        static constexpr CommandSpec SET_VOLTAGE = {"VOLT %f", CommandType::WRITE};
-        static constexpr CommandSpec MEAS_CURRENT = {"MEAS:CURR?", CommandType::QUERY, 50};
+        static CommandSpec SET_VOLTAGE() {
+            return CommandSpec("VOLT %f", CommandType::WRITE);
+        }
+        static CommandSpec MEAS_CURRENT() {
+            return CommandSpec("MEAS:CURR?", CommandType::QUERY, ResponseType::DOUBLE, 50);
+        }
         // ... other commands
     };
 };
@@ -83,8 +129,12 @@ public:
 ```
 
 ### 3. Implement the Public Methods
+### 3. Implement the Public Methods
 
-In the source file (`.cpp`), implement the driver's public methods. Each method should be a clean, one-line call to the `executeCommand` function inherited from the base class, using the command definitions from the `Commands` struct.
+In the source file (`.cpp`), implement the driver's public methods.
+*   For `WRITE` commands, use the `executeCommand` helper.
+*   For `QUERY` commands, use the `queryAndParse<T>()` helper, where `T` is the C++ type corresponding to the `ResponseType` defined in the `CommandSpec`.
+*   Remember to call the static command methods with parentheses, e.g., `Commands::SET_VOLTAGE()`.
 
 ```cpp
 // In KeysightE3631A.cpp
@@ -94,15 +144,11 @@ namespace cvisa::drivers {
 
 // Implement the public methods.
 void KeysightE3631A::setVoltage(double voltage) {
-    // Public methods should be clean one-liners that call executeCommand
-    // with the corresponding static command object.
-    executeCommand(Commands::SET_VOLTAGE, voltage);
+    executeCommand(Commands::SET_VOLTAGE(), voltage);
 }
 
 double KeysightE3631A::measureCurrent() {
-    std::string response = executeCommand(Commands::MEAS_CURRENT);
-    // Parse the response as needed...
-    return std::stod(response);
+    return queryAndParse<double>(Commands::MEAS_CURRENT());
 }
 
 // ... etc.
@@ -112,19 +158,23 @@ double KeysightE3631A::measureCurrent() {
 
 ### 4. Update the Build System
 
-Finally, add your new source files to the `cvisa` library target in the main `CMakeLists.txt`.
+Add your new source files to the `cvisa` library target in the main `CMakeLists.txt`.
 
 ```cmake
 # In CMakeLists.txt
+# In CMakeLists.txt
 add_library(cvisa
-    src/VisaInterface.cpp
-    src/InstrumentDriver.cpp
-    src/exceptions.cpp
-    src/utils.cpp
-    src/drivers/PowerSupply.cpp
-    src/drivers/Agilent66xxA.cpp
+    # ...
     src/drivers/KeysightE3631A.cpp # <-- ADD YOUR NEW DRIVER HERE
 )
 ```
+
+### 5. Driver Contribution Requirements
+
+To ensure all drivers are complete and maintainable, every new instrument driver **must** include the following:
+
+*   **Doxygen Comments:** The driver's class and all public methods must be documented with clear Doxygen comments explaining their purpose, parameters, and return values.
+*   **Dedicated Example:** A new example file (e.g., `examples/keysight_e3631a_usage.cpp`) must be created to demonstrate how to connect to and use the new driver.
+*   **Changelog Entry:** A new entry must be added to the `CHANGELOG.md` file under the "Added" section, documenting the addition of the new driver.
 
 By following this pattern, you ensure that new drivers are easy to create, read, and maintain, and that the core library remains clean and reusable.

@@ -4,9 +4,8 @@ cmake_minimum_required(VERSION 3.10)
 project(cvisa LANGUAGES CXX)
 
 # --- Project Settings ---
-# Set the C++ standard to C++17. This is required for features like std::string_view
-# and other modern C++ constructs that might be used.
-set(CMAKE_CXX_STANDARD 17)
+# Set the C++ standard to C++11.
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -14,10 +13,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # --- Build the cvisa Library ---
 # Create a static library target from the source files.
 add_library(cvisa
-    src/VisaInterface.cpp
-    src/exceptions.cpp
+    src/core/VisaInterface.cpp
+    src/core/InstrumentDriver.cpp
+    src/core/exceptions.cpp
+    src/utils/utils.cpp
     src/drivers/PowerSupply.cpp
     src/drivers/Agilent66xxA.cpp
+    src/drivers/ThermalAirTA5000.cpp
 )
 
 # Make the 'src' directory publicly available for includes.
@@ -78,11 +80,20 @@ endif()
 add_executable(example_app
     examples/basic_usage.cpp
 )
+add_executable(ta5000_example
+    examples/ta5000_usage.cpp
+)
+add_executable(agilent66xxa_example
+    examples/agilent66xxa_usage.cpp
+)
+
 
 # Link the example application against our cvisa library.
 # CMake automatically handles setting up include paths and linking because
 # we defined these properties as PUBLIC on the cvisa target.
 target_link_libraries(example_app PRIVATE cvisa)
+target_link_libraries(ta5000_example PRIVATE cvisa)
+target_link_libraries(agilent66xxa_example PRIVATE cvisa)
 
 # Optional: Add a message to guide the user on how to build.
 message(STATUS "CVisa library and example configured. To build, run your build tool (e.g., 'make' or 'ninja').")
