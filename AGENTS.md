@@ -20,6 +20,40 @@ find src examples -name "*.hpp" -o -name "*.cpp" | xargs clang-format -i
 
 ---
 
+## Logging Engine
+
+The library includes a flexible, static logging engine in `src/core/Logger.hpp`.
+
+*   **Static Class:** The `Logger` is a static class, so you can call its methods directly (e.g., `cvisa::Logger::log(...)`) without needing an instance.
+*   **Multiple Sinks:** The logger supports writing to multiple output streams (or "sinks") simultaneously. You can add any `std::ostream` object as a sink, such as `std::cout` or a file stream.
+*   **Verbosity Levels:** Logging is controlled by a `LogLevel` enum. Messages will only be written if their level is less than or equal to the active verbosity level set on the `VisaInterface` or `InstrumentDriver` instance.
+
+### How to Use the Logger
+
+You can add and remove logging destinations at any time.
+
+```cpp
+#include "src/core/Logger.hpp"
+#include <iostream>
+#include <fstream>
+
+// Create a log file
+std::ofstream logfile("cvisa_log.txt");
+
+// Add std::cout as a logging destination
+cvisa::Logger::addSink(std::cout);
+
+// Add the log file as another destination
+cvisa::Logger::addSink(logfile);
+
+// ... your cvisa code ...
+
+// To clear all logging destinations:
+cvisa::Logger::clearSinks();
+```
+
+---
+
 ## Core Architecture
 
 The library is built on a simple inheritance-based architecture:
@@ -119,19 +153,22 @@ double KeysightE3631A::measureCurrent() {
 
 ### 4. Update the Build System
 
-Finally, add your new source files to the `cvisa` library target in the main `CMakeLists.txt`.
+Add your new source files to the `cvisa` library target in the main `CMakeLists.txt`.
 
 ```cmake
 # In CMakeLists.txt
 add_library(cvisa
-    src/VisaInterface.cpp
-    src/InstrumentDriver.cpp
-    src/exceptions.cpp
-    src/utils.cpp
-    src/drivers/PowerSupply.cpp
-    src/drivers/Agilent66xxA.cpp
+    # ...
     src/drivers/KeysightE3631A.cpp # <-- ADD YOUR NEW DRIVER HERE
 )
 ```
+
+### 5. Driver Contribution Requirements
+
+To ensure all drivers are complete and maintainable, every new instrument driver **must** include the following:
+
+*   **Doxygen Comments:** The driver's class and all public methods must be documented with clear Doxygen comments explaining their purpose, parameters, and return values.
+*   **Dedicated Example:** A new example file (e.g., `examples/keysight_e3631a_usage.cpp`) must be created to demonstrate how to connect to and use the new driver.
+*   **Changelog Entry:** A new entry must be added to the `CHANGELOG.md` file under the "Added" section, documenting the addition of the new driver.
 
 By following this pattern, you ensure that new drivers are easy to create, read, and maintain, and that the core library remains clean and reusable.
