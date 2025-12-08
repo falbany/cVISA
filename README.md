@@ -13,32 +13,32 @@
 - **Robust Error Handling:** Includes a comprehensive exception hierarchy and an optional automatic instrument error checking feature to catch hardware-level errors.
 - **Automatic Response Parsing:** The command engine can automatically parse instrument responses into C++ types (`double`, `int`, `bool`), reducing boilerplate and improving safety.
 - **Declarative, Data-Driven Drivers:** Implement instrument-specific drivers by defining their SCPI command sets as simple data.
-- **Reusable Abstraction Layer:** A clean `InstrumentDriver` base class provides a shared command execution engine for all drivers.
+- **Reusable Abstraction Layer:** A clean `SCPIBase` base class provides a shared command execution engine for all drivers.
 - **Modern Build System:** Uses CMake for easy integration into cross-platform projects.
 
 ## Architecture: Simple and Extensible
 
 The `cvisa` library is built on a simple and powerful inheritance-based architecture.
 
-1.  **`VisaInterface` (The Base Communication Layer):**
+1. **`VISACom` (The Base Communication Layer):**
     This is the foundational class that directly wraps the VISA C API. It handles the low-level details of opening and closing sessions, writing commands, and reading responses.
 
-2.  **`InstrumentDriver` (The Command Engine):**
-    This class inherits from `VisaInterface`, gaining all of its I/O capabilities. It enhances the base layer by adding a powerful, data-driven command execution engine with an automatic response parsing system.
+2. **`SCPIBase` (The Command Engine):**
+    This class inherits from `VISACom`, gaining all of its I/O capabilities. It enhances the base layer by adding a powerful, data-driven command execution engine with an automatic response parsing system.
 
-3.  **Specific Drivers (e.g., `Agilent66xxA`):**
-    A specific driver, like one for an Agilent power supply, inherits from `InstrumentDriver`. This gives it the full VISA I/O and command engine functionality. The only responsibility of a specific driver is to define its unique command set in a public, nested `Commands` struct of `static` methods and provide public methods that are meaningful for that instrument (e.g., `setVoltage()`).
+3. **Specific Drivers (e.g., `Agilent66xxA`):**
+    A specific driver, like one for an Agilent power supply, inherits from `SCPIBase`. This gives it the full VISA I/O and command engine functionality. The only responsibility of a specific driver is to define its unique command set in a public, nested `Commands` struct of `static` methods and provide public methods that are meaningful for that instrument (e.g., `setVoltage()`).
 
 ## Project Structure
 
 The project is organized to separate the core library, instrument-specific drivers, and examples.
 
-```
+``` Text
 cvisa/
 ├── src/
 │   ├── core/                 # Core library components
-│   │   ├── VisaInterface.hpp
-│   │   ├── InstrumentDriver.hpp
+│   │   ├── VISACom.hpp
+│   │   ├── SCPIBase.hpp
 │   │   └── ...
 │   ├── drivers/              # Instrument-specific drivers
 │   │   ├── Agilent66xxA.hpp
@@ -61,14 +61,14 @@ Provide the VISA resource string to the constructor to connect automatically. Th
 ```cpp
 #include <iostream>
 #include "src/drivers/Agilent66xxA.hpp" // Include your specific driver
-#include "src/core/exceptions.hpp"
+#include "src/core/Exceptions.hpp"
 
 void raii_example(const std::string& resource_address) {
     // 1. Instantiate the driver with a resource string to connect automatically.
     cvisa::drivers::Agilent66xxA psu(resource_address);
 
     // 2. Use the driver's methods.
-    std::cout << "Instrument ID: " << psu.getIdentification() << std::endl;
+    std::cout << "Instrument ID: " << psu.IDN_Query() << std::endl;
 
     // 3. The connection is automatically closed when `psu` is destroyed.
 }
@@ -81,20 +81,20 @@ Create a driver by calling the default constructor. The driver will be created i
 ```cpp
 #include <iostream>
 #include "src/drivers/Agilent66xxA.hpp"
-#include "src/core/exceptions.hpp"
+#include "src/core/Exceptions.hpp"
 
 void manual_example(const std::string& resource_address) {
     // 1. Create a disconnected driver by calling the default constructor.
     cvisa::drivers::Agilent66xxA psu;
 
     // 2. Set the resource and connect manually.
-    psu.setResource(resource_address);
-    psu.setResource(resource_address);
+    psu.setAddress(resource_address);
+    psu.setAddress(resource_address);
     psu.setTimeout(5000);
     psu.connect();
 
     // 3. Use the driver's methods.
-    std::cout << "ID: " << psu.getIdentification() << std::endl;
+    std::cout << "ID: " << psu.IDN_Query() << std::endl;
 
     // 4. Manually disconnect.
     psu.disconnect();
@@ -110,11 +110,11 @@ For instruments that support it, you can send multiple `WRITE` commands in a sin
 ```cpp
 #include <vector>
 #include "src/drivers/ThermalAirTA5000.hpp"
-#include "src/core/Command.hpp"
+#include "src/core/SCPICommand.hpp"
 
 void chain_example(cvisa::drivers::ThermalAirTA5000& ta5000) {
     // 1. Create a vector of commands to execute.
-    std::vector<cvisa::CommandSpec> commands = {
+    std::vector<cvisa::SCPICommand> commands = {
         cvisa::drivers::ThermalAirTA5000::Commands::setFlowOn(),
         cvisa::drivers::ThermalAirTA5000::Commands::setHeadDown(),
         cvisa::drivers::ThermalAirTA5000::Commands::setDutControlModeOn()

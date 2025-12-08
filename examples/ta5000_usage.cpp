@@ -22,9 +22,9 @@ int main() {
         ta5000.connect(resourceName);
 
         // --- Basic Operations ---
-        std::cout << "Instrument ID: " << ta5000.getIdentification() << std::endl;
+        std::cout << "Instrument ID: " << ta5000.IDN_Query() << std::endl;
 
-        ta5000.reset();
+        ta5000.RST();
         std::cout << "Instrument has been reset." << std::endl;
 
         ta5000.setCompressorOn();

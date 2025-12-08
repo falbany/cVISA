@@ -7,62 +7,62 @@
 namespace cvisa {
 
     /**
- * @class VisaException
- * @brief Base exception class for all VISA-related errors.
- *
- * This exception is thrown when a VISA function call returns a status other
- * than VI_SUCCESS. It inherits from std::runtime_error to provide a descriptive
- * error message.
- */
+     * @class VisaException
+     * @brief Base exception class for all VISA-related errors.
+     *
+     * This exception is thrown when a VISA function call returns a status other
+     * than VI_SUCCESS. It inherits from std::runtime_error to provide a descriptive
+     * error message.
+     */
     class VisaException : public std::runtime_error {
       public:
         explicit VisaException(const std::string& message) : std::runtime_error(message) {}
     };
 
     /**
- * @class ConnectionException
- * @brief Exception for errors related to establishing or maintaining a
- * connection.
- *
- * This is thrown for failures in opening a session (e.g., viOpen) or when a
- * connection is unexpectedly terminated.
- */
+     * @class ConnectionException
+     * @brief Exception for errors related to establishing or maintaining a
+     * connection.
+     *
+     * This is thrown for failures in opening a session (e.g., viOpen) or when a
+     * connection is unexpectedly terminated.
+     */
     class ConnectionException : public VisaException {
       public:
         explicit ConnectionException(const std::string& message) : VisaException(message) {}
     };
 
     /**
- * @class CommandException
- * @brief Exception for errors that occur during command execution
- * (write/read/query).
- *
- * This is thrown for failures in I/O operations like viWrite or viRead, often
- * indicating a problem with the command syntax or instrument state.
- */
+     * @class CommandException
+     * @brief Exception for errors that occur during command execution
+     * (write/read/query).
+     *
+     * This is thrown for failures in I/O operations like viWrite or viRead, often
+     * indicating a problem with the command syntax or instrument state.
+     */
     class CommandException : public VisaException {
       public:
         explicit CommandException(const std::string& message) : VisaException(message) {}
     };
 
     /**
- * @class TimeoutException
- * @brief Exception for errors that occur when a VISA operation times out.
- *
- * This is a special case of CommandException, thrown specifically when a
- * VI_ERROR_TMO status is returned, allowing for more granular error handling
- * such as retry logic.
- */
+     * @class TimeoutException
+     * @brief Exception for errors that occur when a VISA operation times out.
+     *
+     * This is a special case of CommandException, thrown specifically when a
+     * VI_ERROR_TMO status is returned, allowing for more granular error handling
+     * such as retry logic.
+     */
     class TimeoutException : public CommandException {
       public:
         explicit TimeoutException(const std::string& message) : CommandException(message) {}
     };
 
     /**
- * @class InstrumentException
- * @brief Thrown when an instrument reports an error in its error queue (e.g.,
- *        from a SYST:ERR? query).
- */
+     * @class InstrumentException
+     * @brief Thrown when an instrument reports an error in its error queue (e.g.,
+     *        from a SYST:ERR? query).
+     */
     class InstrumentException : public VisaException {
       public:
         explicit InstrumentException(const std::string& message) : VisaException(message) {}

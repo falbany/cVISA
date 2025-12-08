@@ -7,8 +7,8 @@
 #include <vector>
 
 // Core cvisa includes
-#include "src/core/VisaInterface.hpp"    // Needed for findResources and logging
-#include "src/core/exceptions.hpp"
+#include "src/core/Exceptions.hpp"
+#include "src/core/VISACom.hpp"    // Needed for findResources and logging
 #include "src/drivers/Agilent66xxA.hpp"
 
 void print_separator() { std::cout << "----------------------------------------" << std::endl; }
@@ -41,7 +41,7 @@ void run_raii_example(const std::string& resource_address) {
     print_separator();
 
     // 2. Use the driver's high-level methods.
-    std::cout << "Instrument ID: " << psu.getIdentification() << std::endl;
+    std::cout << "Instrument ID: " << psu.IDN_Query() << std::endl;
     print_separator();
 
     // 3. Configure the power supply.
@@ -76,7 +76,7 @@ void run_manual_example(const std::string& resource_address) {
     std::cout << "\nLog level for this instance set to INFO.\n" << std::endl;
 
     // 2. Set the resource and configuration, then connect manually.
-    psu.setResource(resource_address);
+    psu.setAddress(resource_address);
     psu.setTimeout(5000);
     psu.setReadTermination('\n');
     std::cout << "Resource set to: " << resource_address << std::endl;
@@ -87,7 +87,7 @@ void run_manual_example(const std::string& resource_address) {
     print_separator();
 
     // 3. Use the driver's high-level methods.
-    std::cout << "Instrument ID: " << psu.getIdentification() << std::endl;
+    std::cout << "Instrument ID: " << psu.IDN_Query() << std::endl;
     psu.setOutput(true);
     std::cout << "Output enabled." << std::endl;
     print_separator();
@@ -109,7 +109,7 @@ int main() {
     try {
         // --- Discover connected VISA instruments ---
         std::cout << "Finding connected VISA instruments..." << std::endl;
-        const auto resources = cvisa::VisaInterface::findResources();
+        const auto resources = cvisa::VISACom::findResources();
 
         if (resources.empty()) {
             std::cerr << "No VISA instruments found. Please check connections "

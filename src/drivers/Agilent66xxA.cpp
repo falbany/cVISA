@@ -1,6 +1,6 @@
 #include "Agilent66xxA.hpp"
 
-#include "../core/exceptions.hpp"
+#include "../core/Exceptions.hpp"
 
 #include <stdexcept>
 #include <string>

@@ -1,6 +1,6 @@
 #include "PowerSupply.hpp"
 
-#include "../core/exceptions.hpp"
+#include "../core/Exceptions.hpp"
 
 #include <map>
 #include <string>

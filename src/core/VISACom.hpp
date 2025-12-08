@@ -16,16 +16,16 @@ using ViStatus  = long;
 namespace cvisa {
 
     /**
- * @class VisaInterface
- * @brief A C++11 compliant RAII wrapper for the VISA C API with flexible
- * connection management.
- *
- * This class encapsulates a VISA session. It can be constructed with a VISA
- * resource string for immediate connection (RAII-style) or constructed empty
- * for manual connection management.
- */
-    class VisaInterface {
-      private:
+     * @class VISACom
+     * @brief A C++11 compliant RAII wrapper for the VISA C API with flexible
+     * connection management.
+     *
+     * This class encapsulates a VISA session. It can be constructed with a VISA
+     * resource string for immediate connection (RAII-style) or constructed empty
+     * for manual connection management.
+     */
+    class VISACom {
+      protected:
         // --- Member Variables ---
         std::string  m_resourceName;
         unsigned int m_timeout_ms;
@@ -48,49 +48,49 @@ namespace cvisa {
       public:
         // --- Constructors and Destructor ---
         /**
-     * @brief Default constructor. Creates a disconnected interface object.
-     */
-        VisaInterface();
+         * @brief Default constructor. Creates a disconnected interface object.
+         */
+        VISACom();
 
         /**
-     * @brief Constructs and connects with resource name only.
-     */
-        explicit VisaInterface(const std::string& resourceName);
+         * @brief Constructs and connects with resource name only.
+         */
+        explicit VISACom(const std::string& resourceName);
 
         /**
-     * @brief Constructs and connects with timeout and read termination.
-     */
-        explicit VisaInterface(const std::string& resourceName, unsigned int timeout_ms, char read_termination);
+         * @brief Constructs and connects with timeout and read termination.
+         */
+        explicit VISACom(const std::string& resourceName, unsigned int timeout_ms, char read_termination);
 
         /**
          * @brief Destructor. Disconnects from the instrument if connected.
          */
-        virtual ~VisaInterface();
+        virtual ~VISACom();
 
         // --- Rule of Five: Move semantics enabled, copy semantics disabled ---
-        VisaInterface(const VisaInterface&) = delete;
-        VisaInterface& operator=(const VisaInterface&) = delete;
+        VISACom(const VISACom&)            = delete;
+        VISACom& operator=(const VISACom&) = delete;
 
         /**
          * @brief Move constructor.
          *
-         * Transfers ownership of the VISA session from another `VisaInterface`
+         * Transfers ownership of the VISA session from another `VISACom`
          * object. The other object is left in a disconnected, but valid, state.
          *
          * @param other The object to move from.
          */
-        VisaInterface(VisaInterface&& other) noexcept;
+        VISACom(VISACom&& other) noexcept;
 
         /**
          * @brief Move assignment operator.
          *
-         * Transfers ownership of the VISA session from another `VisaInterface`
+         * Transfers ownership of the VISA session from another `VISACom`
          * object. The other object is left in a disconnected, but valid, state.
          *
          * @param other The object to move from.
          * @return A reference to this object.
          */
-        VisaInterface& operator=(VisaInterface&& other) noexcept;
+        VISACom& operator=(VISACom&& other) noexcept;
 
         // --- Configuration ---
         /**
@@ -101,7 +101,7 @@ namespace cvisa {
          * @param resourceName The VISA resource string (e.g., "GPIB0::1::INSTR").
          * @throws ConnectionException if the interface is already connected.
          */
-        virtual void setResource(const std::string& resourceName);
+        virtual void setAddress(const std::string& resourceName);
 
         /**
          * @brief Sets the communication timeout for VISA operations.
@@ -152,7 +152,7 @@ namespace cvisa {
         /**
          * @brief Manually establishes a connection to the instrument.
          *
-         * A resource name must have been set via `setResource()` or the constructor
+         * A resource name must have been set via `setAddress()` or the constructor
          * prior to calling this.
          *
          * @throws ConnectionException if no resource name is set or if connection
@@ -182,108 +182,108 @@ namespace cvisa {
 
         // --- Core I/O Operations ---
         /**
-     * @brief Writes a command string to the instrument.
-     * @param command The SCPI command string to send.
-     * @throws ConnectionException if the interface is not connected.
-     * @throws CommandException on a VISA communication error.
-     */
+         * @brief Writes a command string to the instrument.
+         * @param command The SCPI command string to send.
+         * @throws ConnectionException if the interface is not connected.
+         * @throws CommandException on a VISA communication error.
+         */
         virtual void write(const std::string& command);
 
         /**
-     * @brief Writes a block of binary data to the instrument.
-     *
-     * This method is suitable for sending waveform data or other large binary
-     * payloads. It does not append any termination characters.
-     *
-     * @param data A vector of bytes to send to the instrument.
-     * @throws ConnectionException if the interface is not connected.
-     * @throws CommandException on a VISA communication error.
-     */
+         * @brief Writes a block of binary data to the instrument.
+         *
+         * This method is suitable for sending waveform data or other large binary
+         * payloads. It does not append any termination characters.
+         *
+         * @param data A vector of bytes to send to the instrument.
+         * @throws ConnectionException if the interface is not connected.
+         * @throws CommandException on a VISA communication error.
+         */
         virtual void writeBinary(const std::vector<uint8_t>& data);
 
         /**
-     * @brief Reads a string-based response from the instrument.
-     *
-     * This operation will read up to `bufferSize` bytes or until a
-     * termination character is encountered if one has been configured.
-     *
-     * @param bufferSize The maximum number of bytes to read.
-     * @return The string response from the instrument.
-     * @throws ConnectionException if the interface is not connected.
-     * @throws TimeoutException if the read operation times out.
-     * @throws CommandException on other VISA communication errors.
-     */
+         * @brief Reads a string-based response from the instrument.
+         *
+         * This operation will read up to `bufferSize` bytes or until a
+         * termination character is encountered if one has been configured.
+         *
+         * @param bufferSize The maximum number of bytes to read.
+         * @return The string response from the instrument.
+         * @throws ConnectionException if the interface is not connected.
+         * @throws TimeoutException if the read operation times out.
+         * @throws CommandException on other VISA communication errors.
+         */
         virtual std::string read(size_t bufferSize = 2048);
 
         /**
-     * @brief Reads a block of binary data from the instrument.
-     *
-     * This method is designed to read binary data, such as a captured
-     * waveform. It reads up to `bufferSize` bytes. The instrument must be
-     * configured to send binary data (e.g., using an appropriate `FORMAT`
-     * command) before calling this.
-     *
-     * @param bufferSize The maximum number of bytes to read.
-     * @return A vector of bytes containing the data read from the instrument.
-     * @throws ConnectionException if the interface is not connected.
-     * @throws TimeoutException if the read operation times out.
-     * @throws CommandException on other VISA communication errors.
-     */
+         * @brief Reads a block of binary data from the instrument.
+         *
+         * This method is designed to read binary data, such as a captured
+         * waveform. It reads up to `bufferSize` bytes. The instrument must be
+         * configured to send binary data (e.g., using an appropriate `FORMAT`
+         * command) before calling this.
+         *
+         * @param bufferSize The maximum number of bytes to read.
+         * @return A vector of bytes containing the data read from the instrument.
+         * @throws ConnectionException if the interface is not connected.
+         * @throws TimeoutException if the read operation times out.
+         * @throws CommandException on other VISA communication errors.
+         */
         virtual std::vector<uint8_t> readBinary(size_t bufferSize = 4096);
 
         /**
-     * @brief Performs a query: writes a command and reads the response.
-     *
-     * @param command The SCPI query string to send (e.g., "*IDN?").
-     * @param bufferSize The maximum number of bytes to expect in the response.
-     * @param delay_ms An optional delay in milliseconds to wait between the
-     * write and read operations.
-     * @return The string response from the instrument.
-     * @throws ConnectionException if the interface is not connected.
-     * @throws TimeoutException if the read operation times out.
-     * @throws CommandException on other VISA communication errors.
-     */
+         * @brief Performs a query: writes a command and reads the response.
+         *
+         * @param command The SCPI query string to send (e.g., "*IDN_Query?").
+         * @param bufferSize The maximum number of bytes to expect in the response.
+         * @param delay_ms An optional delay in milliseconds to wait between the
+         * write and read operations.
+         * @return The string response from the instrument.
+         * @throws ConnectionException if the interface is not connected.
+         * @throws TimeoutException if the read operation times out.
+         * @throws CommandException on other VISA communication errors.
+         */
         virtual std::string query(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0);
 
         /**
-     * @brief Performs a query asynchronously.
-     *
-     * @param command The SCPI query string to send.
-     * @param bufferSize The maximum number of bytes for the response.
-     * @param delay_ms Optional delay between write and read.
-     * @return A `std::future<std::string>` that will hold the instrument's
-     * response.
-     * @throws ConnectionException if the interface is not connected.
-     */
+         * @brief Performs a query asynchronously.
+         *
+         * @param command The SCPI query string to send.
+         * @param bufferSize The maximum number of bytes for the response.
+         * @param delay_ms Optional delay between write and read.
+         * @return A `std::future<std::string>` that will hold the instrument's
+         * response.
+         * @throws ConnectionException if the interface is not connected.
+         */
         virtual std::future<std::string> queryAsync(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0);
 
         // --- Instrument Control & Status ---
         /**
-     * @brief Clears the communication interface of the instrument.
-     *
-     * This function sends a bus-specific command (e.g., GPIB Selected Device
-     * Clear) to the instrument, which should abort any pending operations and
-     * return the interface to a known state. This is useful for error
-     * recovery.
-     *
-     * @throws ConnectionException if the interface is not connected.
-     * @throws VisaException on a VISA communication error.
-     */
+         * @brief Clears the communication interface of the instrument.
+         *
+         * This function sends a bus-specific command (e.g., GPIB Selected Device
+         * Clear) to the instrument, which should abort any pending operations and
+         * return the interface to a known state. This is useful for error
+         * recovery.
+         *
+         * @throws ConnectionException if the interface is not connected.
+         * @throws VisaException on a VISA communication error.
+         */
         void clear();
 
         /**
-     * @brief Reads the instrument's status byte using a serial poll.
-     *
-     * This performs a serial poll (or equivalent bus-specific operation) to
-     * read the status byte without parsing a response message. The status
-     * byte often contains summary information about the instrument's state,
-     * such as whether an error is available in the queue or if an operation is
-     * complete.
-     *
-     * @return The value of the status byte (an 8-bit integer).
-     * @throws ConnectionException if the interface is not connected.
-     * @throws VisaException on a VISA communication error.
-     */
+         * @brief Reads the instrument's status byte using a serial poll.
+         *
+         * This performs a serial poll (or equivalent bus-specific operation) to
+         * read the status byte without parsing a response message. The status
+         * byte often contains summary information about the instrument's state,
+         * such as whether an error is available in the queue or if an operation is
+         * complete.
+         *
+         * @return The value of the status byte (an 8-bit integer).
+         * @throws ConnectionException if the interface is not connected.
+         * @throws VisaException on a VISA communication error.
+         */
         uint8_t readStatusByte();
 
         // --- Static Utilities ---

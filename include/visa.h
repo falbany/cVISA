@@ -2,34 +2,34 @@
 #define MOCK_VISA_H
 
 // --- Basic VISA Data Types ---
-typedef long ViStatus;
+typedef long          ViStatus;
 typedef unsigned long ViSession;
-typedef unsigned int ViUInt32;
+typedef unsigned int  ViUInt32;
 typedef unsigned char ViUInt8;
-typedef short ViInt16;
-typedef char ViInt8;
-typedef ViSession ViFindList; // ViFindList is a type of session handle
+typedef short         ViInt16;
+typedef char          ViInt8;
+typedef ViSession     ViFindList;    // ViFindList is a type of session handle
 
 // --- VISA Completion and Error Codes ---
-#define VI_SUCCESS                     (0L)
-#define VI_ERROR_TMO                   (-1073807339L)
-#define VI_ERROR_RSRC_NFOUND           (-1073807343L)
-#define VI_ERROR_RSRC_LOCKED           (-1073807342L)
-#define VI_ERROR_CONN_LOST             (-1073807198L)
-#define VI_ERROR_INV_EXPR              (-1073807313L)
-#define VI_ERROR_NLISTENERS            (-1073807295L)
+#define VI_SUCCESS (0L)
+#define VI_ERROR_TMO (-1073807339L)
+#define VI_ERROR_RSRC_NFOUND (-1073807343L)
+#define VI_ERROR_RSRC_LOCKED (-1073807342L)
+#define VI_ERROR_CONN_LOST (-1073807198L)
+#define VI_ERROR_INV_EXPR (-1073807313L)
+#define VI_ERROR_NLISTENERS (-1073807295L)
 
 // --- VISA Constants ---
-#define VI_NULL                        (0)
-#define VI_TRUE                        (1)
-#define VI_FALSE                       (0)
-#define VI_FIND_BUFLEN                 (256)
+#define VI_NULL (0)
+#define VI_TRUE (1)
+#define VI_FALSE (0)
+#define VI_FIND_BUFLEN (256)
 
 // --- VISA Attributes ---
-#define VI_ATTR_TMO_VALUE              (0x3FFF001A)
-#define VI_ATTR_TERMCHAR               (0x3FFF0018)
-#define VI_ATTR_TERMCHAR_EN            (0x3FFF0038)
-#define VI_ATTR_SEND_END_EN            (0x3FFF0016)
+#define VI_ATTR_TMO_VALUE (0x3FFF001A)
+#define VI_ATTR_TERMCHAR (0x3FFF0018)
+#define VI_ATTR_TERMCHAR_EN (0x3FFF0038)
+#define VI_ATTR_SEND_END_EN (0x3FFF0016)
 
 // --- Mock Function Declarations ---
 #ifdef __cplusplus
@@ -50,4 +50,4 @@ ViStatus viStatusDesc(ViSession vi, ViStatus status, char* desc);
 }
 #endif
 
-#endif // MOCK_VISA_H
+#endif    // MOCK_VISA_H

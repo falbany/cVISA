@@ -14,12 +14,11 @@ int main() {
     std::cout << "Description: " << psu.getDescription() << std::endl;
 
     try {
-
         // The driver will automatically connect when the resource name is set.
         // The destructor will automatically disconnect.
 
         // Ask the user for the ressource name, guided by available resources.
-        std::vector<std::string> resources = cvisa::VisaInterface::findResources();
+        std::vector<std::string> resources = cvisa::VISACom::findResources();
         std::cout << "Available VISA Resources:" << std::endl;
         for (const auto& res : resources) {
             std::cout << "  - " << res << std::endl;
@@ -34,8 +33,8 @@ int main() {
         psu.connect(resourceName);
 
         // --- Basic Operations ---
-        std::cout << "Instrument ID: " << psu.getIdentification() << std::endl;
-        psu.reset();
+        std::cout << "Instrument ID: " << psu.IDN_Query() << std::endl;
+        psu.RST();
         std::cout << "Instrument has been reset." << std::endl;
 
         // --- Display Control ---

@@ -7,6 +7,7 @@ TabWidth: 4
 UseTab: Never
 IndentPPDirectives: BeforeHash
 AccessModifierOffset: -2
+IndentWrappedFunctionNames: false
 
 # Braces
 AlwaysBreakTemplateDeclarations: 'Yes'
@@ -19,7 +20,7 @@ BraceWrapping:
   SplitEmptyFunction: false
 
 # Column Limit
-ColumnLimit: 160
+ColumnLimit: 170
 
 # Alignments
 AlignConsecutiveAssignments: true
@@ -61,7 +62,7 @@ BreakBeforeTernaryOperators: true
 
 # Comments
 CommentPragmas: '^ IWYU pragma:'
-ReflowComments: false
+ReflowComments: true
 SpacesBeforeTrailingComments: 4
 
 # Spaces

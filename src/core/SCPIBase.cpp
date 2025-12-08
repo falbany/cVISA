@@ -1,6 +1,6 @@
-#include "InstrumentDriver.hpp"
+#include "SCPIBase.hpp"
 
-#include "exceptions.hpp"
+#include "Exceptions.hpp"
 
 #include <algorithm>    // For std::find_if_not
 #include <string>
@@ -20,18 +20,18 @@ namespace cvisa {
 
         // --- Common SCPI Command Implementations ---
 
-        std::string InstrumentDriver::getIdentification() { return trim(executeCommand(CommonCommands::getIdentification())); }
+        std::string SCPIBase::IDN_Query() { return trim(executeCommand(SCPICommons::IDN_Query())); }
 
-        void InstrumentDriver::reset() { executeCommand(CommonCommands::reset()); }
+        void SCPIBase::RST() { executeCommand(SCPICommons::RST()); }
 
-        void InstrumentDriver::clearStatus() { executeCommand(CommonCommands::clearStatus()); }
+        void SCPIBase::CLS() { executeCommand(SCPICommons::CLS()); }
 
-        void InstrumentDriver::waitToContinue() { executeCommand(CommonCommands::waitToContinue()); }
+        void SCPIBase::WAI() { executeCommand(SCPICommons::WAI()); }
 
-        bool InstrumentDriver::isOperationComplete() { return trim(executeCommand(CommonCommands::operationComplete())) == "1"; }
+        bool SCPIBase::isOperationComplete() { return trim(executeCommand(SCPICommons::OPC_Query())) == "1"; }
 
-        int InstrumentDriver::runSelfTest() {
-            std::string response = trim(executeCommand(CommonCommands::selfTest()));
+        int SCPIBase::runSelfTest() {
+            std::string response = trim(executeCommand(SCPICommons::TST_Query()));
             try {
                 return std::stoi(response);
             } catch (const std::exception& e) {
@@ -39,47 +39,47 @@ namespace cvisa {
             }
         }
 
-        uint8_t InstrumentDriver::getStatusByte() {
-            std::string response = trim(executeCommand(CommonCommands::getStatusByte()));
+        uint8_t SCPIBase::STB_Query() {
+            std::string response = trim(executeCommand(SCPICommons::STB_Query()));
             try {
                 return static_cast<uint8_t>(std::stoi(response));
             } catch (const std::exception& e) {
-                throw CommandException("Invalid response for getStatusByte: " + response);
+                throw CommandException("Invalid response for STB_Query: " + response);
             }
         }
 
-        uint8_t InstrumentDriver::getEventStatusRegister() {
-            std::string response = trim(executeCommand(CommonCommands::getEventStatusRegister()));
+        uint8_t SCPIBase::ESR_Query() {
+            std::string response = trim(executeCommand(SCPICommons::ESR_Query()));
             try {
                 return static_cast<uint8_t>(std::stoi(response));
             } catch (const std::exception& e) {
-                throw CommandException("Invalid response for getEventStatusRegister: " + response);
+                throw CommandException("Invalid response for ESR_Query: " + response);
             }
         }
 
-        void InstrumentDriver::setEventStatusEnable(uint8_t mask) { executeCommand(CommonCommands::setEventStatusEnable(), mask); }
+        void SCPIBase::ESE_Set(uint8_t mask) { executeCommand(SCPICommons::ESE_Set(), mask); }
 
-        uint8_t InstrumentDriver::getEventStatusEnable() {
-            std::string response = trim(executeCommand(CommonCommands::getEventStatusEnable()));
+        uint8_t SCPIBase::ESE_Query() {
+            std::string response = trim(executeCommand(SCPICommons::ESE_Query()));
             try {
                 return static_cast<uint8_t>(std::stoi(response));
             } catch (const std::exception& e) {
-                throw CommandException("Invalid response for getEventStatusEnable: " + response);
+                throw CommandException("Invalid response for ESE_Query: " + response);
             }
         }
 
-        void InstrumentDriver::setServiceRequestEnable(uint8_t mask) { executeCommand(CommonCommands::setServiceRequestEnable(), mask); }
+        void SCPIBase::SRE_Set(uint8_t mask) { executeCommand(SCPICommons::SRE_Set(), mask); }
 
-        uint8_t InstrumentDriver::getServiceRequestEnable() {
-            std::string response = trim(executeCommand(CommonCommands::getServiceRequestEnable()));
+        uint8_t SCPIBase::SRE_Query() {
+            std::string response = trim(executeCommand(SCPICommons::SRE_Query()));
             try {
                 return static_cast<uint8_t>(std::stoi(response));
             } catch (const std::exception& e) {
-                throw CommandException("Invalid response for getServiceRequestEnable: " + response);
+                throw CommandException("Invalid response for SRE_Query: " + response);
             }
         }
 
-        void InstrumentDriver::checkInstrumentError() {
+        void SCPIBase::readErrorQueue() {
             std::string response = query("SYST:ERR?");
             // SCPI standard: "+0,\"No error\"" means no error.
             // Anything else is an error. We check for the leading '+0'
@@ -88,7 +88,7 @@ namespace cvisa {
             }
         }
 
-        void InstrumentDriver::executeCommandChain(const std::vector<CommandSpec>& commands, const std::string& delimiter) {
+        void SCPIBase::executeCommandChain(const std::vector<SCPICommand>& commands, const std::string& delimiter) {
             if (commands.empty()) {
                 return;    // Nothing to do
             }
@@ -118,7 +118,7 @@ namespace cvisa {
             write(chained_command);
 
             if (m_autoErrorCheckEnabled) {
-                checkInstrumentError();
+                readErrorQueue();
             }
         }
 

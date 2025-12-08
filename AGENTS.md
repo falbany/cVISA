@@ -26,7 +26,7 @@ The library includes a flexible, static logging engine in `src/core/Logger.hpp`.
 
 - **Static Class:** The `Logger` is a static class, so you can call its methods directly (e.g., `cvisa::Logger::log(...)`) without needing an instance.
 - **Multiple Sinks:** The logger supports writing to multiple output streams (or "sinks") simultaneously. You can add any `std::ostream` object as a sink, such as `std::cout` or a file stream.
-- **Verbosity Levels:** Logging is controlled by a `LogLevel` enum. Messages will only be written if their level is less than or equal to the active verbosity level set on the `VisaInterface` or `InstrumentDriver` instance.
+- **Verbosity Levels:** Logging is controlled by a `LogLevel` enum. Messages will only be written if their level is less than or equal to the active verbosity level set on the `VISACom` or `SCPIBase` instance.
 
 ### How to Use the Logger
 
@@ -58,15 +58,15 @@ cvisa::Logger::clearSinks();
 
 The library is built on a simple inheritance-based architecture:
 
-1.  **Low-Level VISA Wrapper (`VisaInterface`):** This is the foundational class that directly wraps the VISA C API. It is a direct, RAII-compliant wrapper that handles the low-level details of opening, closing, reading from, and writing to an instrument.
+1. **Low-Level VISA Wrapper (`VISACom`):** This is the foundational class that directly wraps the VISA C API. It is a direct, RAII-compliant wrapper that handles the low-level details of opening, closing, reading from, and writing to an instrument.
 
-2.  **High-Level Driver Abstraction (`InstrumentDriver`):** This class inherits from `VisaInterface`, gaining all of its I/O capabilities. It provides shared functionality for all drivers, including a command execution engine and an automatic response parsing system.
+2. **High-Level Driver Abstraction (`SCPIBase`):** This class inherits from `VISACom`, gaining all of its I/O capabilities. It provides shared functionality for all drivers, including a command execution engine and an automatic response parsing system.
 
-3.  **Specific Drivers (e.g., `Agilent66xxA`):** A specific driver inherits from `InstrumentDriver`. Its primary responsibility is to define its unique SCPI command set in a public, nested `Commands` struct and provide high-level public methods for instrument control.
+3. **Specific Drivers (e.g., `Agilent66xxA`):** A specific driver inherits from `SCPIBase`. Its primary responsibility is to define its unique SCPI command set in a public, nested `Commands` struct and provide high-level public methods for instrument control.
 
 ## Automatic Instrument Error Checking
 
-The `InstrumentDriver` base class includes an optional feature to automatically check for instrument errors after every command. This is controlled by the `enableAutoErrorCheck(bool)` method. When enabled, it sends a `SYST:ERR?` query after each command and throws an `InstrumentException` if the instrument reports an error.
+The `SCPIBase` base class includes an optional feature to automatically check for instrument errors after every command. This is controlled by the `enableAutoErrorCheck(bool)` method. When enabled, it sends a `SYST:ERR?` query after each command and throws an `InstrumentException` if the instrument reports an error.
 
 This feature is **disabled by default**. It is recommended to enable it during development and debugging.
 
@@ -81,33 +81,30 @@ Create a new header (`.hpp`) and source (`.cpp`) file for your driver inside the
 ### 2. Define the Driver Class and Commands
 
 Create a new header (`.hpp`) and source (`.cpp`) file for your driver inside the `src/drivers/` directory. For example: `KeysightE3631A.hpp` and `KeysightE3631A.cpp`.
+In the header file, define your new class. It must inherit from `cvisa::drivers::SCPIBase` and include a public nested `struct` named `Commands`.
+In the header file, define your new class. It must inherit from `cvisa::drivers::SCPIBase` and include a public nested `struct` named `Commands`.
 
-### 2. Define the Driver Class and Commands
-
-In the header file, define your new class. It must inherit from `cvisa::drivers::InstrumentDriver` and include a public nested `struct` named `Commands`.
-In the header file, define your new class. It must inherit from `cvisa::drivers::InstrumentDriver` and include a public nested `struct` named `Commands`.
-
-- The `Commands` struct must contain a `static` method for every SCPI command the driver supports. Each method must return a `CommandSpec` object. This approach provides compile-time safety and enables IDE autocompletion in a C++11 compliant way.
-- For `QUERY` commands, you must specify the `ResponseType` in the `CommandSpec` constructor.
+- The `Commands` struct must contain a `static` method for every SCPI command the driver supports. Each method must return a `SCPICommand` object. This approach provides compile-time safety and enables IDE autocompletion in a C++11 compliant way.
+- For `QUERY` commands, you must specify the `ResponseType` in the `SCPICommand` constructor.
 - The driver should expose overloaded constructors that mirror the base class to support both RAII-style and manual connections.
 
 ```cpp
 // In KeysightE3631A.hpp
-#include "../InstrumentDriver.hpp"
-#include "../Command.hpp"
+#include "../SCPIBase.hpp"
+#include "../SCPICommand.hpp"
 #include <string>
 
 namespace cvisa::drivers {
 
-class KeysightE3631A : public InstrumentDriver {
+class KeysightE3631A : public SCPIBase {
 public:
     // --- Constructors ---
     KeysightE3631A() = default;
     explicit KeysightE3631A(const std::string& resourceName)
-        : InstrumentDriver(resourceName) {}
+        : SCPIBase(resourceName) {}
     explicit KeysightE3631A(const std::string& resourceName,
                               unsigned int timeout_ms, char read_termination)
-        : InstrumentDriver(resourceName, timeout_ms, read_termination) {}
+        : SCPIBase(resourceName, timeout_ms, read_termination) {}
 
     // --- Public API ---
     void setVoltage(double voltage);
@@ -116,11 +113,11 @@ public:
 
     // --- Command Definitions ---
     struct Commands {
-        static CommandSpec SET_VOLTAGE() {
-            return CommandSpec("VOLT %f", CommandType::WRITE);
+        static SCPICommand SET_VOLTAGE() {
+            return SCPICommand("VOLT %f", CommandType::WRITE);
         }
-        static CommandSpec MEAS_CURRENT() {
-            return CommandSpec("MEAS:CURR?", CommandType::QUERY, ResponseType::DOUBLE, 50);
+        static SCPICommand MEAS_CURRENT() {
+            return SCPICommand("MEAS:CURR?", CommandType::QUERY, ResponseType::DOUBLE, 50);
         }
         // ... other commands
     };
@@ -131,12 +128,10 @@ public:
 
 ### 3. Implement the Public Methods
 
-### 3. Implement the Public Methods
-
 In the source file (`.cpp`), implement the driver's public methods.
 
 - For `WRITE` commands, use the `executeCommand` helper.
-- For `QUERY` commands, use the `queryAndParse<T>()` helper, where `T` is the C++ type corresponding to the `ResponseType` defined in the `CommandSpec`.
+- For `QUERY` commands, use the `queryAndParse<T>()` helper, where `T` is the C++ type corresponding to the `ResponseType` defined in the `SCPICommand`.
 - Remember to call the static command methods with parentheses, e.g., `Commands::SET_VOLTAGE()`.
 
 ```cpp
