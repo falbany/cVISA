@@ -82,6 +82,10 @@ namespace cvisa {
              */
             std::string getDescription() const { return m_description; }
 
+            // Inherit the base class write and query methods to avoid name hiding
+            using VISACom::query;
+            using VISACom::write;
+
             /**
              * @brief Writes a command to the instrument using a command specification.
              * @tparam Args Variadic argument types for the command format string.
@@ -106,9 +110,6 @@ namespace cvisa {
              */
             template <typename T, typename... Args>
             T query(const SCPICommand& spec, Args... args) {
-                if (spec.type != CommandType::QUERY) {
-                    throw std::logic_error("This query method only supports QUERY commands.");
-                }
                 return queryAndParse<T>(spec, args...);
             }
 
@@ -121,9 +122,6 @@ namespace cvisa {
              */
             template <typename... Args>
             std::string query(const SCPICommand& spec, Args... args) {
-                if (spec.type != CommandType::QUERY) {
-                    throw std::logic_error("This query method only supports QUERY commands.");
-                }
                 return queryAndParse<std::string>(spec, args...);
             }
 
@@ -303,6 +301,9 @@ namespace cvisa {
              */
             template <typename T, typename... Args>
             T queryAndParse(const SCPICommand& spec, Args... args) {
+                if (spec.type != CommandType::QUERY) {
+                    throw std::logic_error("queryAndParse only supports QUERY commands.");
+                }
                 std::string response = executeCommand(spec, args...);
                 return parseResponse<T>(response);
             }
