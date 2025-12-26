@@ -20,64 +20,29 @@ namespace cvisa {
 
         // --- Common SCPI Command Implementations ---
 
-        std::string SCPIBase::IDN_Query() { return trim(executeCommand(SCPICommons::IDN_Query())); }
+        std::string SCPIBase::IDN_Query() { return trim(query(SCPICommons::IDN_Query())); }
 
-        void SCPIBase::RST() { executeCommand(SCPICommons::RST()); }
+        void SCPIBase::RST() { write(SCPICommons::RST()); }
 
-        void SCPIBase::CLS() { executeCommand(SCPICommons::CLS()); }
+        void SCPIBase::CLS() { write(SCPICommons::CLS()); }
 
-        void SCPIBase::WAI() { executeCommand(SCPICommons::WAI()); }
+        void SCPIBase::WAI() { write(SCPICommons::WAI()); }
 
-        bool SCPIBase::isOperationComplete() { return trim(executeCommand(SCPICommons::OPC_Query())) == "1"; }
+        bool SCPIBase::isOperationComplete() { return query<int>(SCPICommons::OPC_Query()) == 1; }
 
-        int SCPIBase::runSelfTest() {
-            std::string response = trim(executeCommand(SCPICommons::TST_Query()));
-            try {
-                return std::stoi(response);
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response from self-test query: " + response);
-            }
-        }
+        int SCPIBase::runSelfTest() { return query<int>(SCPICommons::TST_Query()); }
 
-        uint8_t SCPIBase::STB_Query() {
-            std::string response = trim(executeCommand(SCPICommons::STB_Query()));
-            try {
-                return static_cast<uint8_t>(std::stoi(response));
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response for STB_Query: " + response);
-            }
-        }
+        uint8_t SCPIBase::STB_Query() { return query<uint8_t>(SCPICommons::STB_Query()); }
 
-        uint8_t SCPIBase::ESR_Query() {
-            std::string response = trim(executeCommand(SCPICommons::ESR_Query()));
-            try {
-                return static_cast<uint8_t>(std::stoi(response));
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response for ESR_Query: " + response);
-            }
-        }
+        uint8_t SCPIBase::ESR_Query() { return query<uint8_t>(SCPICommons::ESR_Query()); }
 
-        void SCPIBase::ESE_Set(uint8_t mask) { executeCommand(SCPICommons::ESE_Set(), mask); }
+        void SCPIBase::ESE_Set(uint8_t mask) { write(SCPICommons::ESE_Set(), mask); }
 
-        uint8_t SCPIBase::ESE_Query() {
-            std::string response = trim(executeCommand(SCPICommons::ESE_Query()));
-            try {
-                return static_cast<uint8_t>(std::stoi(response));
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response for ESE_Query: " + response);
-            }
-        }
+        uint8_t SCPIBase::ESE_Query() { return query<uint8_t>(SCPICommons::ESE_Query()); }
 
-        void SCPIBase::SRE_Set(uint8_t mask) { executeCommand(SCPICommons::SRE_Set(), mask); }
+        void SCPIBase::SRE_Set(uint8_t mask) { write(SCPICommons::SRE_Set(), mask); }
 
-        uint8_t SCPIBase::SRE_Query() {
-            std::string response = trim(executeCommand(SCPICommons::SRE_Query()));
-            try {
-                return static_cast<uint8_t>(std::stoi(response));
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response for SRE_Query: " + response);
-            }
-        }
+        uint8_t SCPIBase::SRE_Query() { return query<uint8_t>(SCPICommons::SRE_Query()); }
 
         void SCPIBase::readErrorQueue() {
             std::string response = query("SYST:ERR?");
