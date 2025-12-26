@@ -1,6 +1,7 @@
+#include "VISACom.hpp"
+
 #include "Exceptions.hpp"
 #include "Logger.hpp"
-#include "VISACom.hpp"
 #include "utils.hpp"
 
 #include <chrono>

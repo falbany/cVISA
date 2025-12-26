@@ -1,9 +1,9 @@
 #ifndef CVISA_INSTRUMENT_DRIVER_HPP
 #define CVISA_INSTRUMENT_DRIVER_HPP
 
+#include "Exceptions.hpp"
 #include "SCPICommand.hpp"
 #include "VISACom.hpp"
-#include "Exceptions.hpp"
 #include <type_traits>
 
 #include <cstdio>
@@ -81,6 +81,51 @@ namespace cvisa {
              * @return A std::string containing the description.
              */
             std::string getDescription() const { return m_description; }
+
+            /**
+             * @brief Writes a command to the instrument using a command specification.
+             * @tparam Args Variadic argument types for the command format string.
+             * @param spec The `SCPICommand` specification.
+             * @param args Arguments to be formatted into the command string.
+             */
+            template <typename... Args>
+            void write(const SCPICommand& spec, Args... args) {
+                if (spec.type != CommandType::WRITE) {
+                    throw std::logic_error("This write method only supports WRITE commands.");
+                }
+                executeCommand(spec, args...);
+            }
+
+            /**
+             * @brief Queries the instrument and parses the response.
+             * @tparam T The expected return type (e.g., `int`, `double`, `bool`, `std::string`).
+             * @tparam Args Variadic argument types for the command format string.
+             * @param spec The `SCPICommand` specification.
+             * @param args Arguments to be formatted into the command string.
+             * @return The parsed response from the instrument.
+             */
+            template <typename T, typename... Args>
+            T query(const SCPICommand& spec, Args... args) {
+                if (spec.type != CommandType::QUERY) {
+                    throw std::logic_error("This query method only supports QUERY commands.");
+                }
+                return queryAndParse<T>(spec, args...);
+            }
+
+            /**
+             * @brief Queries the instrument and returns the raw string response.
+             * @tparam Args Variadic argument types for the command format string.
+             * @param spec The `SCPICommand` specification.
+             * @param args Arguments to be formatted into the command string.
+             * @return The raw string response from the instrument.
+             */
+            template <typename... Args>
+            std::string query(const SCPICommand& spec, Args... args) {
+                if (spec.type != CommandType::QUERY) {
+                    throw std::logic_error("This query method only supports QUERY commands.");
+                }
+                return queryAndParse<std::string>(spec, args...);
+            }
 
             // --- Common SCPI Commands ---
             /**
