@@ -45,11 +45,29 @@ namespace cvisa {
         uint8_t SCPIBase::SRE_Query() { return query<uint8_t>(SCPICommons::SRE_Query()); }
 
         void SCPIBase::readErrorQueue() {
-            std::string response = query("SYST:ERR?");
-            // SCPI standard: "+0,\"No error\"" means no error.
-            // Anything else is an error. We check for the leading '+0'
-            if (response.find("+0") != 0) {
-                throw InstrumentException("Instrument error: " + trim(response));
+            std::vector<std::string> errors;
+            while (true) {
+                std::string response = trim(query("SYST:ERR?"));
+                // SCPI standard: "+0,\"No error\"" means no error.
+                if (response.find("+0") == 0) {
+                    break;
+                }
+                errors.push_back(response);
+
+                // As a safety measure, break after 10 errors to prevent an infinite loop
+                // in case of a misbehaving instrument.
+                if (errors.size() >= 10) {
+                    errors.push_back("Error queue safety limit reached.");
+                    break;
+                }
+            }
+
+            if (!errors.empty()) {
+                std::string combined_error = "Instrument error(s): ";
+                for (size_t i = 0; i < errors.size(); ++i) {
+                    combined_error += errors[i] + (i < errors.size() - 1 ? "; " : "");
+                }
+                throw InstrumentException(combined_error);
             }
         }
 

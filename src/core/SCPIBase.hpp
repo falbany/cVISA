@@ -313,6 +313,17 @@ namespace cvisa {
             template <typename T>
             struct type_tag {};
 
+            // Generic template that will only be instantiated for unsupported types.
+            template <typename T>
+            T parseResponse(type_tag<T>, const std::string& response) {
+                // This static_assert will always fail if this generic template is
+                // instantiated. The only way it gets instantiated is if no specialized
+                // overload (below) matches the type `T`.
+                static_assert(sizeof(T) == 0,
+                              "Unsupported type for queryAndParse. Supported types are: "
+                              "double, int, bool, std::string.");
+            }
+
             template <typename T>
             T parseResponse(const std::string& response) {
                 return parseResponse(type_tag<T>(), response);
