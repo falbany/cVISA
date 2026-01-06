@@ -20,71 +20,54 @@ namespace cvisa {
 
         // --- Common SCPI Command Implementations ---
 
-        std::string SCPIBase::IDN_Query() { return trim(executeCommand(SCPICommons::IDN_Query())); }
+        std::string SCPIBase::IDN_Query() { return trim(query(SCPICommons::IDN_Query())); }
 
-        void SCPIBase::RST() { executeCommand(SCPICommons::RST()); }
+        void SCPIBase::RST() { write(SCPICommons::RST()); }
 
-        void SCPIBase::CLS() { executeCommand(SCPICommons::CLS()); }
+        void SCPIBase::CLS() { write(SCPICommons::CLS()); }
 
-        void SCPIBase::WAI() { executeCommand(SCPICommons::WAI()); }
+        void SCPIBase::WAI() { write(SCPICommons::WAI()); }
 
-        bool SCPIBase::isOperationComplete() { return trim(executeCommand(SCPICommons::OPC_Query())) == "1"; }
+        bool SCPIBase::isOperationComplete() { return query<int>(SCPICommons::OPC_Query()) == 1; }
 
-        int SCPIBase::runSelfTest() {
-            std::string response = trim(executeCommand(SCPICommons::TST_Query()));
-            try {
-                return std::stoi(response);
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response from self-test query: " + response);
-            }
-        }
+        int SCPIBase::runSelfTest() { return query<int>(SCPICommons::TST_Query()); }
 
-        uint8_t SCPIBase::STB_Query() {
-            std::string response = trim(executeCommand(SCPICommons::STB_Query()));
-            try {
-                return static_cast<uint8_t>(std::stoi(response));
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response for STB_Query: " + response);
-            }
-        }
+        uint8_t SCPIBase::STB_Query() { return query<uint8_t>(SCPICommons::STB_Query()); }
 
-        uint8_t SCPIBase::ESR_Query() {
-            std::string response = trim(executeCommand(SCPICommons::ESR_Query()));
-            try {
-                return static_cast<uint8_t>(std::stoi(response));
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response for ESR_Query: " + response);
-            }
-        }
+        uint8_t SCPIBase::ESR_Query() { return query<uint8_t>(SCPICommons::ESR_Query()); }
 
-        void SCPIBase::ESE_Set(uint8_t mask) { executeCommand(SCPICommons::ESE_Set(), mask); }
+        void SCPIBase::ESE_Set(uint8_t mask) { write(SCPICommons::ESE_Set(), mask); }
 
-        uint8_t SCPIBase::ESE_Query() {
-            std::string response = trim(executeCommand(SCPICommons::ESE_Query()));
-            try {
-                return static_cast<uint8_t>(std::stoi(response));
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response for ESE_Query: " + response);
-            }
-        }
+        uint8_t SCPIBase::ESE_Query() { return query<uint8_t>(SCPICommons::ESE_Query()); }
 
-        void SCPIBase::SRE_Set(uint8_t mask) { executeCommand(SCPICommons::SRE_Set(), mask); }
+        void SCPIBase::SRE_Set(uint8_t mask) { write(SCPICommons::SRE_Set(), mask); }
 
-        uint8_t SCPIBase::SRE_Query() {
-            std::string response = trim(executeCommand(SCPICommons::SRE_Query()));
-            try {
-                return static_cast<uint8_t>(std::stoi(response));
-            } catch (const std::exception& e) {
-                throw CommandException("Invalid response for SRE_Query: " + response);
-            }
-        }
+        uint8_t SCPIBase::SRE_Query() { return query<uint8_t>(SCPICommons::SRE_Query()); }
 
         void SCPIBase::readErrorQueue() {
-            std::string response = query("SYST:ERR?");
-            // SCPI standard: "+0,\"No error\"" means no error.
-            // Anything else is an error. We check for the leading '+0'
-            if (response.find("+0") != 0) {
-                throw InstrumentException("Instrument error: " + trim(response));
+            std::vector<std::string> errors;
+            while (true) {
+                std::string response = trim(query("SYST:ERR?"));
+                // SCPI standard: "+0,\"No error\"" means no error.
+                if (response.find("+0") == 0) {
+                    break;
+                }
+                errors.push_back(response);
+
+                // As a safety measure, break after 10 errors to prevent an infinite loop
+                // in case of a misbehaving instrument.
+                if (errors.size() >= 10) {
+                    errors.push_back("Error queue safety limit reached.");
+                    break;
+                }
+            }
+
+            if (!errors.empty()) {
+                std::string combined_error = "Instrument error(s): ";
+                for (size_t i = 0; i < errors.size(); ++i) {
+                    combined_error += errors[i] + (i < errors.size() - 1 ? "; " : "");
+                }
+                throw InstrumentException(combined_error);
             }
         }
 

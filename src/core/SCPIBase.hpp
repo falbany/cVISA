@@ -1,9 +1,9 @@
 #ifndef CVISA_INSTRUMENT_DRIVER_HPP
 #define CVISA_INSTRUMENT_DRIVER_HPP
 
+#include "Exceptions.hpp"
 #include "SCPICommand.hpp"
 #include "VISACom.hpp"
-#include "Exceptions.hpp"
 #include <type_traits>
 
 #include <cstdio>
@@ -81,6 +81,49 @@ namespace cvisa {
              * @return A std::string containing the description.
              */
             std::string getDescription() const { return m_description; }
+
+            // Inherit the base class write and query methods to avoid name hiding
+            using VISACom::query;
+            using VISACom::write;
+
+            /**
+             * @brief Writes a command to the instrument using a command specification.
+             * @tparam Args Variadic argument types for the command format string.
+             * @param spec The `SCPICommand` specification.
+             * @param args Arguments to be formatted into the command string.
+             */
+            template <typename... Args>
+            void write(const SCPICommand& spec, Args... args) {
+                if (spec.type != CommandType::WRITE) {
+                    throw std::logic_error("This write method only supports WRITE commands.");
+                }
+                executeCommand(spec, args...);
+            }
+
+            /**
+             * @brief Queries the instrument and parses the response.
+             * @tparam T The expected return type (e.g., `int`, `double`, `bool`, `std::string`).
+             * @tparam Args Variadic argument types for the command format string.
+             * @param spec The `SCPICommand` specification.
+             * @param args Arguments to be formatted into the command string.
+             * @return The parsed response from the instrument.
+             */
+            template <typename T, typename... Args>
+            T query(const SCPICommand& spec, Args... args) {
+                return queryAndParse<T>(spec, args...);
+            }
+
+            /**
+             * @brief Queries the instrument and returns the raw string response.
+             * @tparam Args Variadic argument types for the command format string.
+             * @param spec The `SCPICommand` specification.
+             * @param args Arguments to be formatted into the command string.
+             * @return The raw string response from the instrument.
+             */
+            template <typename... Args>
+            std::string query(const SCPICommand& spec, Args... args) {
+                return queryAndParse<std::string>(spec, args...);
+            }
 
             // --- Common SCPI Commands ---
             /**
@@ -258,6 +301,9 @@ namespace cvisa {
              */
             template <typename T, typename... Args>
             T queryAndParse(const SCPICommand& spec, Args... args) {
+                if (spec.type != CommandType::QUERY) {
+                    throw std::logic_error("queryAndParse only supports QUERY commands.");
+                }
                 std::string response = executeCommand(spec, args...);
                 return parseResponse<T>(response);
             }
@@ -266,6 +312,17 @@ namespace cvisa {
             // C++11 Tag Dispatching for Type-Safe Parsing
             template <typename T>
             struct type_tag {};
+
+            // Generic template that will only be instantiated for unsupported types.
+            template <typename T>
+            T parseResponse(type_tag<T>, const std::string& response) {
+                // This static_assert will always fail if this generic template is
+                // instantiated. The only way it gets instantiated is if no specialized
+                // overload (below) matches the type `T`.
+                static_assert(sizeof(T) == 0,
+                              "Unsupported type for queryAndParse. Supported types are: "
+                              "double, int, bool, std::string.");
+            }
 
             template <typename T>
             T parseResponse(const std::string& response) {
