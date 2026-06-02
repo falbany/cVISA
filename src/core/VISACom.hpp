@@ -180,6 +180,18 @@ namespace cvisa {
          */
         bool isConnected() const;
 
+        /**
+         * @brief Gets the current VISA resource name.
+         * @return The resource name string.
+         */
+        std::string getAddress() const;
+
+        /**
+         * @brief Gets the current timeout value.
+         * @return The timeout in milliseconds.
+         */
+        unsigned int getTimeout() const;
+
         // --- Core I/O Operations ---
         /**
          * @brief Writes a command string to the instrument.
@@ -256,6 +268,16 @@ namespace cvisa {
          * @throws ConnectionException if the interface is not connected.
          */
         virtual std::future<std::string> queryAsync(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0);
+
+        /**
+         * @brief Waits for the instrument to complete its current operation.
+         *
+         * Sends "*OPC?" and waits for a response.
+         *
+         * @param timeout_ms Optional timeout for this specific wait.
+         * @return True if operation completed, false on timeout.
+         */
+        virtual bool waitForOPC(unsigned int timeout_ms = 0);
 
         // --- Instrument Control & Status ---
         /**

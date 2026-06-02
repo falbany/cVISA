@@ -117,6 +117,10 @@ namespace cvisa {
 
     bool VISACom::isConnected() const { return m_instrumentHandle != VI_NULL; }
 
+    std::string VISACom::getAddress() const { return m_resourceName; }
+
+    unsigned int VISACom::getTimeout() const { return m_timeout_ms; }
+
     // --- Move Semantics ---
 
     VISACom::VISACom(VISACom&& other) noexcept
@@ -166,7 +170,9 @@ namespace cvisa {
     }
 
     void VISACom::writeBinary(const std::vector<uint8_t>& data) {
-        if (!isConnected()) throw ConnectionException("Not connected to an instrument. Cannot write binary data.");
+        if (!isConnected()) {
+            throw ConnectionException("Not connected to an instrument. Cannot write binary data.");
+        }
         Logger::log(m_logLevel, LogLevel::DEBUG, m_resourceName, "Writing binary data of size: " + utils::to_string(data.size()));
         ViUInt32 returnCount = 0;
         ViStatus status      = viWrite(m_instrumentHandle, (unsigned char*)data.data(), static_cast<ViUInt32>(data.size()), &returnCount);
@@ -174,7 +180,9 @@ namespace cvisa {
     }
 
     std::string VISACom::read(size_t bufferSize) {
-        if (!isConnected()) throw ConnectionException("Not connected to an instrument. Cannot read.");
+        if (!isConnected()) {
+            throw ConnectionException("Not connected to an instrument. Cannot read.");
+        }
         Logger::log(m_logLevel, LogLevel::DEBUG, m_resourceName, "Reading data (buffer size: " + utils::to_string(bufferSize) + ")");
         std::vector<char> buffer(bufferSize);
         ViUInt32          returnCount = 0;
@@ -211,6 +219,30 @@ namespace cvisa {
         if (!isConnected()) throw ConnectionException("Not connected to an instrument. Cannot query asynchronously.");
         Logger::log(m_logLevel, LogLevel::DEBUG, m_resourceName, "Starting asynchronous query.");
         return std::async(std::launch::async, [this, command, bufferSize, delay_ms]() { return this->query(command, bufferSize, delay_ms); });
+    }
+
+    bool VISACom::waitForOPC(unsigned int timeout_ms) {
+        if (!isConnected()) {
+            throw ConnectionException("Not connected. Cannot wait for OPC.");
+        }
+
+        unsigned int originalTimeout = m_timeout_ms;
+        if (timeout_ms > 0) {
+            setTimeout(timeout_ms);
+        }
+
+        try {
+            std::string response = query("*OPC?");
+            if (timeout_ms > 0) {
+                setTimeout(originalTimeout);
+            }
+            return response.find('1') != std::string::npos;
+        } catch (...) {
+            if (timeout_ms > 0) {
+                setTimeout(originalTimeout);
+            }
+            throw;
+        }
     }
 
     // --- Instrument Control & Status ---

@@ -36,5 +36,8 @@
     "clangd.serverCompletionRanking": true,
     "[c]": {
         "editor.defaultFormatter": "xaver.clang-format"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "yzhang.markdown-all-in-one"
     }
 }

@@ -177,15 +177,7 @@ namespace cvisa {
              * @return The formatted command string.
              */
             template <typename... Args>
-            std::string formatCommand(const char* cmd_format, Args... args) {
-                int size = std::snprintf(nullptr, 0, cmd_format, args...);
-                if (size < 0) {
-                    throw std::runtime_error("Error during command formatting: snprintf failed.");
-                }
-                std::vector<char> buffer(size + 1);
-                std::snprintf(buffer.data(), buffer.size(), cmd_format, args...);
-                return std::string(buffer.data());
-            }
+            std::string formatCommand(const char* cmd_format, Args... args);
 
             /**
              * @brief Executes a command, dispatching to `write` or `query`.
@@ -200,23 +192,7 @@ namespace cvisa {
              * empty string for `WRITE` commands.
              */
             template <typename... Args>
-            std::string executeCommand(const SCPICommand& spec, Args... args) {
-                std::string command = formatCommand(spec.command, args...);
-                Logger::log(m_logLevel, LogLevel::INFO, m_resourceName, "Executing command: " + command);
-
-                std::string response;
-                if (spec.type == CommandType::WRITE) {
-                    write(command);
-                } else {
-                    response = query(command, 2048, spec.delay_ms);
-                }
-
-                if (m_autoErrorCheckEnabled) {
-                    readErrorQueue();
-                }
-
-                return response;
-            }
+            std::string executeCommand(const SCPICommand& spec, Args... args);
 
             /**
              * @brief Executes an asynchronous `QUERY` command.
@@ -227,15 +203,7 @@ namespace cvisa {
              * response.
              */
             template <typename... Args>
-            std::future<std::string> executeCommandAsync(const SCPICommand& spec, Args... args) {
-                if (spec.type != CommandType::QUERY) {
-                    throw std::logic_error(
-                        "executeCommandAsync can only be used with QUERY "
-                        "commands.");
-                }
-                std::string command = formatCommand(spec.command, args...);
-                return queryAsync(command, 2048, spec.delay_ms);
-            }
+            std::future<std::string> executeCommandAsync(const SCPICommand& spec, Args... args);
 
             /**
              * @brief Checks the instrument's error queue for errors (SYST:ERR?).
@@ -257,10 +225,7 @@ namespace cvisa {
              * @return The parsed response value.
              */
             template <typename T, typename... Args>
-            T queryAndParse(const SCPICommand& spec, Args... args) {
-                std::string response = executeCommand(spec, args...);
-                return parseResponse<T>(response);
-            }
+            T queryAndParse(const SCPICommand& spec, Args... args);
 
           private:
             // C++11 Tag Dispatching for Type-Safe Parsing
@@ -268,9 +233,7 @@ namespace cvisa {
             struct type_tag {};
 
             template <typename T>
-            T parseResponse(const std::string& response) {
-                return parseResponse(type_tag<T>(), response);
-            }
+            T parseResponse(const std::string& response);
 
             std::string parseResponse(type_tag<std::string>, const std::string& response) { return response; }
 
@@ -297,5 +260,7 @@ namespace cvisa {
 
     }    // namespace drivers
 }    // namespace cvisa
+
+#include "SCPIBase.tpp"
 
 #endif    // CVISA_INSTRUMENT_DRIVER_HPP
