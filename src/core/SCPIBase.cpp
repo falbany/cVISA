@@ -1,6 +1,6 @@
 #include "SCPIBase.hpp"
 
-#include "Exceptions.hpp"
+#include "exceptions.hpp"
 
 #include <algorithm>    // For std::find_if_not
 #include <string>

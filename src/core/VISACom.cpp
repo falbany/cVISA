@@ -1,7 +1,7 @@
-#include "Exceptions.hpp"
+#include "exceptions.hpp"
 #include "Logger.hpp"
 #include "VISACom.hpp"
-#include "utils.hpp"
+#include "../utils/utils.hpp"
 
 #include <chrono>
 #include <string>
@@ -175,7 +175,7 @@ namespace cvisa {
 
     std::string VISACom::read(size_t bufferSize) {
         if (!isConnected()) throw ConnectionException("Not connected to an instrument. Cannot read.");
-        Logger::log(m_logLevel, LogLevel::DEBUG, "Reading data (buffer size: " + utils::to_string(bufferSize) + ")");
+        Logger::log(m_logLevel, LogLevel::DEBUG, m_resourceName, "Reading data (buffer size: " + utils::to_string(bufferSize) + ")");
         std::vector<char> buffer(bufferSize);
         ViUInt32          returnCount = 0;
         ViStatus          status      = viRead(m_instrumentHandle, (unsigned char*)buffer.data(), static_cast<ViUInt32>(buffer.size()), &returnCount);
@@ -201,7 +201,7 @@ namespace cvisa {
         if (!isConnected()) throw ConnectionException("Not connected to an instrument. Cannot query.");
         write(command);
         if (delay_ms > 0) {
-            Logger::log(m_logLevel, LogLevel::DEBUG, "Delaying for " + utils::to_string(delay_ms) + "ms before reading.");
+            Logger::log(m_logLevel, LogLevel::DEBUG, m_resourceName, "Delaying for " + utils::to_string(delay_ms) + "ms before reading.");
             std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
         }
         return read(bufferSize);

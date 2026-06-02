@@ -1,0 +1,16 @@
+# Global configuration for the CTool/CBridge project
+
+Documentation:
+  CommentFormat: Doxygen
+
+---
+If:
+  PathMatch:
+    - build/.*
+    - build-mac/.*
+    - build-msys2/.*
+    - build-mingw/.*
+    - build-clang/.*
+    - _deps/.*
+Index:
+  Background: Skip

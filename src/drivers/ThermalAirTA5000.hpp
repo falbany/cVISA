@@ -89,13 +89,13 @@ namespace cvisa {
              * @brief Sets the temperature window.
              * @param window The temperature window in degrees Celsius.
              */
-            void setTemperatureWindow(double window);
+            void setWindow(double window);
 
             /**
              * @brief Reads the temperature window.
              * @return The temperature window in degrees Celsius.
              */
-            double getTemperatureWindow();
+            double getWindow();
 
             /**
              * @brief Puts the thermal head up.
@@ -139,7 +139,7 @@ namespace cvisa {
              * @brief Reads the measured main nozzle air flow rate.
              * @return The measured flow rate in scfm.
              */
-            int getFlowRateMeasured();
+            int measureFlowRate();
 
             /**
              * @brief Reads the measured main nozzle flow rate in liters/min.
@@ -148,20 +148,16 @@ namespace cvisa {
             double getFlowRateLitersPerMin();
 
             /**
-             * @brief Turns DUT control mode ON.
+             * @brief Turns DUT control mode ON or OFF.
+             * @param enable True for DUT mode (ON), False for Air mode (OFF).
              */
-            void setDutControlModeOn();
-
-            /**
-             * @brief Turns AIR control mode ON (by turning DUT mode OFF).
-             */
-            void setDutControlModeOff();
+            void setDutControlMode(bool enable);
 
             /**
              * @brief Reads the DUT mode ON/OFF state.
-             * @return 1 for ON, 0 for OFF.
+             * @return True for DUT mode (ON), False for Air mode (OFF).
              */
-            int getDutControlMode();
+            bool isDutControlModeEnabled();
 
             /**
              * @brief Sets the DUT sensor type.
@@ -195,7 +191,7 @@ namespace cvisa {
              * @brief Sets the lower air temperature limit.
              * @param limit The lower limit in degrees Celsius.
              */
-            void setLowerTemperatureLimit(double limit);
+            void setLowerTempLimit(double limit);
 
             /**
              * @brief Gets the lower air temperature limit.
@@ -207,13 +203,13 @@ namespace cvisa {
              * @brief Sets the upper air temperature limit.
              * @param limit The upper limit in degrees Celsius.
              */
-            void setUpperTemperatureLimit(int limit);
+            void setUpperTempLimit(double limit);
 
             /**
              * @brief Gets the upper air temperature limit.
              * @return The upper limit in degrees Celsius.
              */
-            int getUpperTemperatureLimit();
+            double getUpperTemperatureLimit();
 
             /**
              * @brief Reads the system error state.

@@ -7,9 +7,9 @@
 #include <vector>
 
 // Core cvisa includes
-#include "src/core/Exceptions.hpp"
-#include "src/core/VISACom.hpp"    // Needed for findResources and logging
-#include "src/drivers/Agilent66xxA.hpp"
+#include "core/exceptions.hpp"
+#include "core/VISACom.hpp"    // Needed for findResources and logging
+#include "drivers/Agilent66xxA.hpp"
 
 void print_separator() { std::cout << "----------------------------------------" << std::endl; }
 

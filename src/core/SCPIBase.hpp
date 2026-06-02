@@ -3,7 +3,7 @@
 
 #include "SCPICommand.hpp"
 #include "VISACom.hpp"
-#include "Exceptions.hpp"
+#include "exceptions.hpp"
 #include <type_traits>
 
 #include <cstdio>

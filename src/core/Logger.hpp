@@ -75,16 +75,11 @@ namespace cvisa {
          */
         static std::string levelToString(LogLevel level) {
             switch (level) {
-                case LogLevel::ERROR:
-                    return "ERROR  ";
-                case LogLevel::WARNING:
-                    return "WARNING";
-                case LogLevel::INFO:
-                    return "INFO   ";
-                case LogLevel::DEBUG:
-                    return "DEBUG  ";
-                default:
-                    return "UNKNOWN";
+                case LogLevel::ERROR:   return "ERROR  ";
+                case LogLevel::WARNING: return "WARNING";
+                case LogLevel::INFO:    return "INFO   ";
+                case LogLevel::DEBUG:   return "DEBUG  ";
+                default:                return "UNKNOWN";
             }
         }
 
@@ -102,9 +97,6 @@ namespace cvisa {
             return ss.str();
         }
     };
-
-    // Initialize the static output stream vector.
-    std::vector<std::ostream*> Logger::s_outputStreams;
 
 }    // namespace cvisa
 

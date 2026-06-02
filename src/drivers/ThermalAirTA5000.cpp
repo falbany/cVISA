@@ -17,9 +17,9 @@ namespace cvisa {
 
         int ThermalAirTA5000::getSoakTime() { return queryAndParse<int>(Commands::getSoakTime()); }
 
-        void ThermalAirTA5000::setTemperatureWindow(double window) { executeCommand(Commands::setTemperatureWindow(), window); }
+        void ThermalAirTA5000::setWindow(double window) { executeCommand(Commands::setTemperatureWindow(), window); }
 
-        double ThermalAirTA5000::getTemperatureWindow() { return queryAndParse<double>(Commands::getTemperatureWindow()); }
+        double ThermalAirTA5000::getWindow() { return queryAndParse<double>(Commands::getTemperatureWindow()); }
 
         void ThermalAirTA5000::setHeadUp() { executeCommand(Commands::setHeadUp()); }
 
@@ -35,15 +35,19 @@ namespace cvisa {
 
         int ThermalAirTA5000::getFlowRateSetting() { return queryAndParse<int>(Commands::getFlowRateSetting()); }
 
-        int ThermalAirTA5000::getFlowRateMeasured() { return queryAndParse<int>(Commands::getFlowRateMeasured()); }
+        int ThermalAirTA5000::measureFlowRate() { return queryAndParse<int>(Commands::getFlowRateMeasured()); }
 
         double ThermalAirTA5000::getFlowRateLitersPerMin() { return queryAndParse<double>(Commands::getFlowRateLitersPerMin()); }
 
-        void ThermalAirTA5000::setDutControlModeOn() { executeCommand(Commands::setDutControlModeOn()); }
+        void ThermalAirTA5000::setDutControlMode(bool enable) {
+            if (enable) {
+                executeCommand(Commands::setDutControlModeOn());
+            } else {
+                executeCommand(Commands::setDutControlModeOff());
+            }
+        }
 
-        void ThermalAirTA5000::setDutControlModeOff() { executeCommand(Commands::setDutControlModeOff()); }
-
-        int ThermalAirTA5000::getDutControlMode() { return queryAndParse<int>(Commands::getDutControlMode()); }
+        bool ThermalAirTA5000::isDutControlModeEnabled() { return queryAndParse<int>(Commands::getDutControlMode()) != 0; }
 
         void ThermalAirTA5000::setDutSensorType(int type) { executeCommand(Commands::setDutSensorType(), type); }
 
@@ -55,13 +59,13 @@ namespace cvisa {
 
         int ThermalAirTA5000::getTrickleFlowState() { return queryAndParse<int>(Commands::getTrickleFlowState()); }
 
-        void ThermalAirTA5000::setLowerTemperatureLimit(double limit) { executeCommand(Commands::setLowerTemperatureLimit(), limit); }
+        void ThermalAirTA5000::setLowerTempLimit(double limit) { executeCommand(Commands::setLowerTemperatureLimit(), limit); }
 
         double ThermalAirTA5000::getLowerTemperatureLimit() { return queryAndParse<double>(Commands::getLowerTemperatureLimit()); }
 
-        void ThermalAirTA5000::setUpperTemperatureLimit(int limit) { executeCommand(Commands::setUpperTemperatureLimit(), limit); }
+        void ThermalAirTA5000::setUpperTempLimit(double limit) { executeCommand(Commands::setUpperTemperatureLimit(), static_cast<int>(limit)); }
 
-        int ThermalAirTA5000::getUpperTemperatureLimit() { return queryAndParse<int>(Commands::getUpperTemperatureLimit()); }
+        double ThermalAirTA5000::getUpperTemperatureLimit() { return queryAndParse<double>(Commands::getUpperTemperatureLimit()); }
 
         int ThermalAirTA5000::getErrorState() { return queryAndParse<int>(Commands::getErrorState()); }
 

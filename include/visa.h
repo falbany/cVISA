@@ -31,6 +31,8 @@ typedef ViSession     ViFindList;    // ViFindList is a type of session handle
 #define VI_ATTR_TERMCHAR_EN (0x3FFF0038)
 #define VI_ATTR_SEND_END_EN (0x3FFF0016)
 
+typedef unsigned short ViUInt16;
+
 // --- Mock Function Declarations ---
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +43,8 @@ ViStatus viOpen(ViSession vi, char* desc, int mode, int timeout, ViSession* new_
 ViStatus viClose(ViSession vi);
 ViStatus viWrite(ViSession vi, unsigned char* buf, ViUInt32 count, ViUInt32* retCount);
 ViStatus viRead(ViSession vi, unsigned char* buf, ViUInt32 count, ViUInt32* retCount);
+ViStatus viClear(ViSession vi);
+ViStatus viReadSTB(ViSession vi, ViUInt16* status);
 ViStatus viSetAttribute(ViSession vi, int attrName, int attrValue);
 ViStatus viFindRsrc(ViSession vi, char* expr, ViFindList* findList, ViUInt32* retCount, char* desc);
 ViStatus viFindNext(ViFindList findList, char* desc);

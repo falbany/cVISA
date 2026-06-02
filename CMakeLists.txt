@@ -1,6 +1,6 @@
 # CMakeLists.txt for the cvisa project
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.24)
 project(cvisa LANGUAGES CXX)
 
 # --- Project Settings ---
@@ -9,26 +9,35 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include(BuildTypes)
+include(StaticAnalysis)
+include(Sanitizers)
+include(CodeCoverage)
+
 
 # --- Build the cvisa Library ---
 # Create a static library target from the source files.
-add_library(cvisa
-    src/core/VISACom.cpp
-    src/core/SCPIBase.cpp
-    src/core/Exceptions.cpp
-    src/utils/utils.cpp
-    src/drivers/PowerSupply.cpp
-    src/drivers/Agilent66xxA.cpp
-    src/drivers/ThermalAirTA5000.cpp
+file(GLOB_RECURSE C_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
 )
 
-# Make the 'src' directory publicly available for includes.
+add_library(cvisa
+    ${C_SOURCES}
+)
+
+# Make the 'src' and 'include' directories publicly available for includes.
 # By setting this to PUBLIC, any target that links against cvisa (like the example)
-# will also inherit this include directory. This allows for clean includes, e.g.,
+# will also inherit these include directories. This allows for clean includes, e.g.,
 # #include "VisaInstrument.hpp" instead of #include "src/VisaInstrument.hpp"
 target_include_directories(cvisa
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 
@@ -96,4 +105,4 @@ target_link_libraries(ta5000_example PRIVATE cvisa)
 target_link_libraries(agilent66xxa_example PRIVATE cvisa)
 
 # Optional: Add a message to guide the user on how to build.
-message(STATUS "CVisa library and example configured. To build, run your build tool (e.g., 'make' or 'ninja').")
+message(STATUS "CVisa library and example configured. To build, run your build tool (e.g., 'make' or 'cmake').")
