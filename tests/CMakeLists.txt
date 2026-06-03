@@ -16,8 +16,8 @@ FetchContent_MakeAvailable(googletest)
 # Test executable
 add_executable(VISACom_test VISACom_test.cpp)
 
-# Link against the library from the parent scope and GTest
-target_link_libraries(VISACom_test PRIVATE cvisa gtest_main gmock)
+# Link against the library from the parent scope, GTest, and VISA
+target_link_libraries(VISACom_test PRIVATE cvisa gtest_main gmock ${VISA_LIBRARY})
 
 target_include_directories(VISACom_test PRIVATE 
     ${CMAKE_SOURCE_DIR}/src

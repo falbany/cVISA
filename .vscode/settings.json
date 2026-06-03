@@ -7,9 +7,11 @@
     "editor.formatOnSave": false,
     "editor.defaultFormatter": null,
     "cmake.configureOnOpen": true,
-    "cmake.generator": "Unix Makefiles",
+    "cmake.generator": "MSYS Makefiles",
     "cmake.buildDirectory": "${workspaceFolder}/build",
-    "cmake.configureArgs": [],
+    "cmake.configureArgs": [
+        "-G", "MSYS Makefiles"
+    ],
     "cmake.buildArgs": [],
     "cmake.launchArgs": [],
     "cmake.debugConfig": {

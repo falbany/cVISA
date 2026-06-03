@@ -1,7 +1,7 @@
 # CMakeLists.txt for the cvisa project
 
 cmake_minimum_required(VERSION 3.24)
-project(cvisa LANGUAGES CXX)
+project(cvisa VERSION 0.1.0 LANGUAGES CXX)
 
 # --- Project Settings ---
 # Set the C++ standard to C++11.
@@ -13,6 +13,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_EXAMPLES "Build example applications" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries (.dll/.so)" OFF)
+option(BUILD_TESTS "Build test suite" ON)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(BuildTypes)
@@ -53,6 +54,7 @@ target_include_directories(cvisa
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/internal>
         $<INSTALL_INTERFACE:include>
 )
 
@@ -92,10 +94,12 @@ if(NOT VISA_LIBRARY)
 else()
     message(STATUS "Found VISA library: ${VISA_LIBRARY}")
     # Link our cvisa library against the found VISA library.
-    # This dependency is PRIVATE because consumers of cvisa should not need to
-    # know about or link against the VISA C API directly.
-    target_link_libraries(cvisa PRIVATE ${VISA_LIBRARY})
+    # This dependency is PUBLIC so that tests also link against it.
+    target_link_libraries(cvisa PUBLIC ${VISA_LIBRARY})
 endif()
+
+# Export VISA library path to cache for subdirectories to use
+set(VISA_LIBRARY_FOR_TESTS "${VISA_LIBRARY}" CACHE STRING "VISA library path for tests" FORCE)
 
 # --- Installation ---
 install(TARGETS cvisa
@@ -134,8 +138,18 @@ if(BUILD_EXAMPLES)
 endif()
 
 # --- Tests ---
-enable_testing()
-add_subdirectory(tests)
+if(BUILD_TESTS)
+    enable_testing()
+    
+    # Check if we're using MinGW (incompatible with MSVC VISA SDK)
+    if(MINGW)
+        message(WARNING "MinGW detected - VISA tests will be skipped due to linker incompatibility. "
+                        "Use MSVC or a compatible VISA SDK for MinGW to run tests.")
+        # Skip tests when using MinGW
+    else()
+        add_subdirectory(tests)
+    endif()
+endif()
 
 # Optional: Add a message to guide the user on how to build.
 message(STATUS "CVisa library and example configured. To build, run your build tool (e.g., 'make' or 'cmake').")

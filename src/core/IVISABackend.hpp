@@ -5,31 +5,8 @@
 #include <string>
 #include <vector>
 
-// Forward-declare VISA types to avoid including visa.h in a public header.
-using ViSession = unsigned long;
-using ViStatus  = long;
-using ViObject  = unsigned long;
-using ViAttr    = unsigned int;
-using ViAttrState = unsigned long;
-using ViPUInt32 = unsigned int*;
-using ViUInt16  = unsigned short;
-using ViPUInt16 = unsigned short*;
-using ViPBuf    = unsigned char*;
-using ViBuf     = unsigned char*;
-using ViUInt32  = unsigned int;
-
-// Support for basic status codes without requiring visa.h
-#ifndef VI_SUCCESS
-#define VI_SUCCESS           (0L)
-#define VI_NULL              (0)
-#define VI_ERROR_TMO         (-1073807339L)
-#define VI_ERROR_RSRC_NFOUND (-1073807343L)
-#define VI_ERROR_RSRC_LOCKED (-1073807342L)
-#define VI_ERROR_CONN_LOST   (-1073807198L)
-#define VI_ERROR_INV_EXPR    (-1073807313L)
-#define VI_ERROR_NLISTENERS  (-1073807295L)
-#define VI_ERROR_SYSTEM_ERROR (-1073807360L)
-#endif
+// Include VISA types from internal folder to ensure compatibility with the actual VISA SDK
+#include "../internal/visa.h"
 
 namespace cvisa {
 
