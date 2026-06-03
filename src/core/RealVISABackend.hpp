@@ -2,64 +2,86 @@
 #define CVISA_REAL_VISA_BACKEND_HPP
 
 #include "IVISABackend.hpp"
-#include <visa.h>
+#include "../internal/visa.h"
 
 namespace cvisa {
 
     /**
-     * @brief Real implementation of the IVISABackend interface calling the actual VISA C library.
+     * @brief Real implementation of the IVISABackend interface using IVI Foundation VISA library.
+     * 
+     * This class wraps the IVI Foundation VISA C API, providing thread-safe access to
+     * VISA operations. It forwards calls directly to the underlying VISA library functions.
+     * 
+     * @note This backend requires the IVI Foundation VISA library to be installed and
+     * linked into the final executable.
      */
     class RealVISABackend : public IVISABackend {
-    public:
-        ViStatus visaOpenDefaultRM(ViSession* sesn) override {
-            return ::viOpenDefaultRM(sesn);
+      public:
+        /**
+         * @brief Opens the default VISA resource manager using IVI Foundation VISA.
+         */
+        ViStatus visaOpenDefaultRM(ViSession* sesn) override { return ::viOpenDefaultRM(sesn); }
+
+        /**
+         * @brief Opens a VISA session to a specific instrument using IVI Foundation VISA.
+         */
+        ViStatus visaOpen(ViSession sesn, const ViRsrc name, ViAccessMode mode, ViUInt32 timeout, ViPSession vi) override {
+            return ::viOpen(sesn, name, mode, timeout, vi);
         }
 
-        ViStatus visaOpen(ViSession sesn, const char* name, ViUInt32 mode, ViUInt32 timeout, ViSession* vi) override {
-            return ::viOpen(sesn, const_cast<char*>(name), mode, timeout, vi);
+        /**
+         * @brief Closes a VISA session using IVI Foundation VISA.
+         */
+        ViStatus visaClose(ViObject vi) override { return ::viClose(vi); }
+
+        /**
+         * @brief Sets an attribute on a VISA session using IVI Foundation VISA.
+         */
+        ViStatus visaSetAttribute(ViObject vi, ViAttr attr, ViAttrState attrState) override { return ::viSetAttribute(vi, attr, attrState); }
+
+        /**
+         * @brief Gets an attribute from a VISA session using IVI Foundation VISA.
+         */
+        ViStatus visaGetAttribute(ViObject vi, ViAttr attr, void* attrState) override { return ::viGetAttribute(vi, attr, attrState); }
+
+        /**
+         * @brief Writes data to a VISA session using IVI Foundation VISA.
+         */
+        ViStatus visaWrite(ViSession vi, ViBuf buf, ViUInt32 count, ViPUInt32 retCount) override { return ::viWrite(vi, buf, count, retCount); }
+
+        /**
+         * @brief Reads data from a VISA session using IVI Foundation VISA.
+         */
+        ViStatus visaRead(ViSession vi, ViPBuf buf, ViUInt32 count, ViPUInt32 retCount) override { return ::viRead(vi, buf, count, retCount); }
+
+        /**
+         * @brief Clears a VISA session using IVI Foundation VISA.
+         */
+        ViStatus visaClear(ViSession vi) override { return ::viClear(vi); }
+
+        /**
+         * @brief Reads the service request status byte using IVI Foundation VISA.
+         */
+        ViStatus visaReadSTB(ViSession vi, ViPUInt16 status) override { return ::viReadSTB(vi, status); }
+
+        /**
+         * @brief Finds VISA resources matching an expression using IVI Foundation VISA.
+         */
+        ViStatus visaFindRsrc(ViSession sesn, ViConstRsrc expr, ViPFindList findList, ViPUInt32 retCount, ViRsrc instrDesc) override {
+            return ::viFindRsrc(sesn, expr, findList, retCount, instrDesc);
         }
 
-        ViStatus visaClose(ViObject vi) override {
-            return ::viClose(vi);
-        }
+        /**
+         * @brief Gets the next VISA resource from a find list using IVI Foundation VISA.
+         */
+        ViStatus visaFindNext(ViFindList findList, ViRsrc instrDesc) override { return ::viFindNext(findList, instrDesc); }
 
-        ViStatus visaSetAttribute(ViObject vi, ViAttr attr, ViAttrState attrState) override {
-            return ::viSetAttribute(vi, attr, attrState);
-        }
-
-        ViStatus visaGetAttribute(ViObject vi, ViAttr attr, void* attrState) override {
-            return ::viGetAttribute(vi, attr, attrState);
-        }
-
-        ViStatus visaWrite(ViSession vi, ViBuf buf, ViUInt32 count, ViPUInt32 retCount) override {
-            return ::viWrite(vi, const_cast<ViBuf>(buf), count, retCount);
-        }
-
-        ViStatus visaRead(ViSession vi, ViPBuf buf, ViUInt32 count, ViPUInt32 retCount) override {
-            return ::viRead(vi, buf, count, retCount);
-        }
-
-        ViStatus visaClear(ViSession vi) override {
-            return ::viClear(vi);
-        }
-
-        ViStatus visaReadSTB(ViSession vi, ViPUInt16 status) override {
-            return ::viReadSTB(vi, status);
-        }
-
-        ViStatus visaFindRsrc(ViSession sesn, const char* expr, void* findList, ViPUInt32 retCount, char* instrDesc) override {
-            return ::viFindRsrc(sesn, const_cast<char*>(expr), reinterpret_cast<ViFindList*>(findList), retCount, instrDesc);
-        }
-
-        ViStatus visaFindNext(void* findList, char* instrDesc) override {
-            return ::viFindNext(*reinterpret_cast<ViFindList*>(findList), instrDesc);
-        }
-
-        ViStatus visaStatusDesc(ViObject vi, ViStatus status, char* desc) override {
-            return ::viStatusDesc(vi, status, desc);
-        }
+        /**
+         * @brief Gets the status description for a VISA status code using IVI Foundation VISA.
+         */
+        ViStatus visaStatusDesc(ViObject vi, ViStatus status, ViChar desc[]) override { return ::viStatusDesc(vi, status, desc); }
     };
 
-} // namespace cvisa
+}    // namespace cvisa
 
-#endif // CVISA_REAL_VISA_BACKEND_HPP
+#endif    // CVISA_REAL_VISA_BACKEND_HPP

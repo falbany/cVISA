@@ -1,0 +1,226 @@
+## Thermal Air TA5000 Series Simulation
+##
+## This YAML file defines simulated SCPI dialogues for testing the
+## ThermalAirTA5000 driver without real hardware.
+##
+## Usage:
+##   1. Load this file with SimulatedVISABackend
+##   2. Connect to a registered resource string
+##   3. All SCPI commands will be simulated
+##
+## Resource mappings (in your test code):
+##   backend->registerDevice("GPIB0::1::INSTR", simulation.load("thermalair_ta5000.yaml"));
+##   backend->registerDevice("TCPIP0::192.168.1.200::inst0::INSTR", simulation.load("thermalair_ta5000.yaml"));
+
+spec: "1.0"
+device:
+  name: "Thermal Air TA5000 Series"
+  model: "TA5000"
+  eom:
+    GPIB INSTR: "\n"
+    TCPIP INSTR: "\n"
+    USB INSTR: "\n"
+    LXI INSTR: "\n"
+
+dialogues:
+  ## IEEE-488.2 Common Commands
+  - q: "*IDN?"
+    r: "Thermal Air,TA5000,SN00000001,1.0"
+  
+  - q: "*RST"
+    r: ""
+  
+  - q: "*CLS"
+    r: ""
+  
+  - q: "*OPC?"
+    r: "1"
+  
+  - q: "*TST?"
+    r: "0"
+  
+  ## Fan Control
+  - q: "FAN?"
+    r: "100"
+  
+  - q: "FAN 100"
+    r: ""
+  
+  - q: "FAN 50"
+    r: ""
+  
+  - q: "FAN 0"
+    r: ""
+  
+  - q: "FAN:MODE?"
+    r: "AUTO"
+  
+  - q: "FAN:MODE AUTO"
+    r: ""
+  
+  - q: "FAN:MODE MANUAL"
+    r: ""
+  
+  ## Fan Status
+  - q: "FAN:STATus?"
+    r: "OK"
+  
+  - q: "FAN:ERRor?"
+    r: "0,No error"
+  
+  ## Channel Control
+  - q: "CHANnel 1"
+    r: ""
+  
+  - q: "CHANnel 2"
+    r: ""
+  
+  - q: "CHANnel?"
+    r: "1"
+  
+  - q: "CHANnel:SELect?"
+    r: "1"
+  
+  ## Temperature Control
+  - q: "TEMP?"
+    r: "25.00"
+  
+  - q: "TEMP 50.0"
+    r: ""
+  
+  - q: "TEMP:RAMP?"
+    r: "1.0"
+  
+  - q: "TEMP:RAMP 2.0"
+    r: ""
+  
+  - q: "TEMP:TARGET?"
+    r: "25.00"
+  
+  - q: "TEMP:TARGET 100.0"
+    r: ""
+  
+  ## Humidity Control
+  - q: "HUMidity?"
+    r: "45.0"
+  
+  - q: "HUMidity 45.0"
+    r: ""
+  
+  - q: "HUMidity:TARGET?"
+    r: "45.0"
+  
+  - q: "HUMidity:TARGET 60.0"
+    r: ""
+  
+  ## Pressure Control
+  - q: "PRESsure?"
+    r: "1013.25"
+  
+  - q: "PRESsure 1013.25"
+    r: ""
+  
+  - q: "PRESsure:TARGET?"
+    r: "1013.25"
+  
+  - q: "PRESsure:TARGET 1000.0"
+    r: ""
+  
+  ## Status Queries
+  - q: "SYSTem:ERRor?"
+    r: "0,No error"
+  
+  - q: "SYSTem:VERSion?"
+    r: "1999.0"
+  
+  - q: "STATus:QUEue?"
+    r: "0,No error"
+  
+  - q: "SYSTem:ALArm?"
+    r: "0,No alarm"
+  
+  - q: "SYSTem:ALArm:STATus?"
+    r: "0"
+  
+  - q: "SYSTem:ALArm:COUNt?"
+    r: "0"
+  
+  ## System Control
+  - q: "SYSTem:COMMunicate:RCEN"
+    r: ""
+  
+  - q: "SYSTem:COMMunicate:RCEN?"
+    r: "ON"
+  
+  - q: "SYSTem:COMMunicate:LAN:IPADdress?"
+    r: "192.168.1.200"
+  
+  - q: "SYSTem:LOCK"
+    r: ""
+  
+  - q: "SYSTem:LOCK?"
+    r: "OFF"
+  
+  - q: "SYSTem:UNlock"
+    r: ""
+  
+  ## Output Control
+  - q: "OUTPut:ALL ON"
+    r: ""
+  
+  - q: "OUTPut:ALL OFF"
+    r: ""
+  
+  - q: "OUTPut:ALL?"
+    r: "ON"
+  
+  - q: "OUTPut:1 ON"
+    r: ""
+  
+  - q: "OUTPut:1 OFF"
+    r: ""
+  
+  - q: "OUTPut:1?"
+    r: "ON"
+  
+  - q: "OUTPut:2 ON"
+    r: ""
+  
+  - q: "OUTPut:2 OFF"
+    r: ""
+  
+  - q: "OUTPut:2?"
+    r: "OFF"
+  
+  ## Configuration
+  - q: "CONF?"
+    r: "2:30:1"
+  
+  - q: "CONF 2:30:1"
+    r: ""
+  
+  - q: "CONF:CHANnel?"
+    r: "2"
+  
+  - q: "CONF:RANGE?"
+    r: "30"
+  
+  - q: "CONF:PRESSure?"
+    r: "1"
+  
+  ## Timing
+  - q: "TIMe:DELAY?"
+    r: "1.0"
+  
+  - q: "TIMe:DELAY 2.0"
+    r: ""
+  
+  - q: "TIMe:MEASure?"
+    r: "1.234"
+  
+  ## Query patterns
+  - q: "OUTP*"
+    r: ""
+  
+  - q: "TEMP*"
+    r: ""

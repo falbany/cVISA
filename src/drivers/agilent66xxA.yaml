@@ -1,0 +1,169 @@
+## Agilent/Keysight 66xxA Series Power Supply Simulation
+##
+## This YAML file defines simulated SCPI dialogues for testing the
+## Agilent66xxA driver without real hardware.
+##
+## Usage:
+##   1. Load this file with SimulatedVISABackend
+##   2. Connect to a registered resource string
+##   3. All SCPI commands will be simulated
+##
+## Resource mappings (in your test code):
+##   backend->registerDevice("GPIB0::5::INSTR", simulation.load("agilent66xxA.yaml"));
+##   backend->registerDevice("GPIB0::6::INSTR", simulation.load("agilent66xxA.yaml"));
+##   backend->registerDevice("TCPIP0::192.168.1.100::inst0::INSTR", simulation.load("agilent66xxA.yaml"));
+
+spec: "1.0"
+device:
+  name: "Agilent/Keysight 66xxA Series Power Supply"
+  model: "664xA, 665xA, 667xA, 668xA, 669xA"
+  eom:
+    GPIB INSTR: "\n"
+    TCPIP INSTR: "\n"
+    USB INSTR: "\n"
+    LXI INSTR: "\n"
+
+dialogues:
+  ## IEEE-488.2 Common Commands
+  - q: "*IDN?"
+    r: "Keysight Technologies,6641A,SN00000001,1.0-0.0"
+  
+  - q: "*RST"
+    r: ""
+  
+  - q: "*CLS"
+    r: ""
+  
+  - q: "*OPC?"
+    r: "1"
+  
+  - q: "*TST?"
+    r: "0"
+  
+  ## Output Control
+  - q: "OUTPut 1"
+    r: ""
+  
+  - q: "OUTPut 0"
+    r: ""
+  
+  - q: "OUTPut?"
+    r: "ON"
+  
+  - q: "OUTPut:STATE?"
+    r: "1"
+  
+  - q: "OUTPut:LOAD?"
+    r: "OFF"
+  
+  ## Voltage Control
+  - q: "VOLTage:PROTection?"
+    r: "10.000000"
+  
+  - q: "VOLTage:PROTection 10.0"
+    r: ""
+  
+  - q: "VOLTage?"
+    r: "5.000000"
+  
+  - q: "VOLTage 5.0"
+    r: ""
+  
+  - q: "VOLTage 10.0"
+    r: ""
+  
+  - q: "VOLTage:LOAD:RESistor?"
+    r: "1.000000"
+  
+  - q: "MEASure:VOLTage?"
+    r: "4.987000"
+  
+  ## Current Control
+  - q: "VOLTage:LIMIT?"
+    r: "10.000000"
+  
+  - q: "CURRent:PROTection?"
+    r: "1.000000"
+  
+  - q: "CURRent:PROTection 1.5"
+    r: ""
+  
+  - q: "CURRent?"
+    r: "0.500000"
+  
+  - q: "CURRent 1.5"
+    r: ""
+  
+  - q: "CURRent:LIMIT?"
+    r: "1.000000"
+  
+  - q: "MEASure:CURRent?"
+    r: "0.498000"
+  
+  - q: "CURRent:PROTection:STATe?"
+    r: "0"
+  
+  - q: "CURRent:PROTection:STATe 0"
+    r: ""
+  
+  - q: "CURRent:PROTection:STATe 1"
+    r: ""
+  
+  ## Protection and Status
+  - q: "OUTPut:PROTection:CLEar"
+    r: ""
+  
+  - q: "SYSTem:ERRor?"
+    r: "0,No error"
+  
+  - q: "SYSTem:VERSion?"
+    r: "1999.0"
+  
+  - q: "STATus:QUEue?"
+    r: "0,No error"
+  
+  - q: "STATus:OPERation:CONDition?"
+    r: "0"
+  
+  - q: "STATus:OPERation:ENABle?"
+    r: "0"
+  
+  - q: "STATus:PRESet"
+    r: ""
+  
+  ## Display Subsystem
+  - q: "DISPlay:ENABle"
+    r: ""
+  
+  - q: "DISPlay:ENABle 0"
+    r: ""
+  
+  - q: "DISPlay:ENABle?"
+    r: "ON"
+  
+  - q: "DISPlay:TEXT 'HELLO'"
+    r: ""
+  
+  - q: "DISPlay:TEXT?"
+    r: "'HELLO'"
+  
+  ## Timebase
+  - q: "TIMebase:RANGE?"
+    r: "30"
+  
+  - q: "TIMebase:RANGE 30"
+    r: ""
+  
+  ## Remote Control
+  - q: "SYSTem:COMMunicate:RCEN"
+    r: ""
+  
+  - q: "SYSTem:COMMunicate:RCEN?"
+    r: "ON"
+  
+  - q: "SYSTem:COMMunicate:LAN:IPADdress?"
+    r: "192.168.1.100"
+  
+  ## Query patterns (for parameterized commands)
+  - q: "VOLTage *"
+    r: ""

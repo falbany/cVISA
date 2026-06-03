@@ -9,20 +9,30 @@
 #include <string>
 #include <vector>
 
-// Forward-declare VISA types to avoid including visa.h in a public header.
-using ViSession = unsigned long;
-using ViStatus  = long;
+// Include IVI Foundation VISA type definitions
+#include "../internal/visatype.h"
 
 namespace cvisa {
 
     /**
      * @class VISACom
-     * @brief A C++11 compliant RAII wrapper for the VISA C API with flexible
-     * connection management.
+     * @brief A C++11 compliant RAII wrapper for IVI Foundation VISA C API.
      *
-     * This class encapsulates a VISA session. It can be constructed with a VISA
-     * resource string for immediate connection (RAII-style) or constructed empty
-     * for manual connection management.
+     * This class encapsulates a VISA session, providing resource management through RAII.
+     * It can be constructed with a VISA resource string for immediate connection (RAII-style) 
+     * or constructed empty for manual connection management.
+     * 
+     * The class supports:
+     * - Automatic resource cleanup in destructor (RAII pattern)
+     * - Move semantics for efficient resource transfer
+     * - Flexible timeout and termination character configuration
+     * - Automatic error checking after commands
+     * - Comprehensive logging and error reporting
+     * 
+     * @note This class uses IVI Foundation VISA types internally, ensuring compatibility
+     * with standard VISA implementations like Keysight/Agilent VISA and National Instruments VISA.
+     * 
+     * @see https://www.ivifoundation.org/
      */
     class VISACom {
       public:
@@ -42,11 +52,11 @@ namespace cvisa {
         char         mWriteTermChar;
         bool         mWriteTermSet;
 
-        // VISA handles
+        // IVI Foundation VISA handles
         ViSession mRmHandle;
         ViSession mInstHandle;
 
-        // Backend for VISA C API
+        // Backend for IVI Foundation VISA C API
         IVISABackend* mBackend;
         bool          mOwnBackend;
 

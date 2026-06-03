@@ -3,6 +3,7 @@
 #include "VISACom.hpp"
 #include "RealVISABackend.hpp"
 #include "../utils/utils.hpp"
+#include "../internal/visatype.h"
 
 #include <chrono>
 #include <string>
@@ -14,9 +15,7 @@ namespace cvisa {
 
     // --- Constructors and Destructor ---
 
-    VISACom::VISACom()
-        : VISACom(nullptr, true) {
-    }
+    VISACom::VISACom() : VISACom(nullptr, true) {}
 
     VISACom::VISACom(IVISABackend* backend, bool ownBackend)
         : mTimeout(0),
@@ -31,12 +30,11 @@ namespace cvisa {
           mOwnBackend(ownBackend),
           mLogLevel(LogLevel::WARNING),
           mAutoErrorCheck(false) {
-        
         if (mBackend == nullptr) {
-            mBackend = new RealVISABackend();
+            mBackend    = new RealVISABackend();
             mOwnBackend = true;
         }
-        Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "VISACom constructed.");
+        Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "VISACom constructed using IVI Foundation VISA.");
     }
 
     VISACom::VISACom(const std::string& resourceName) : VISACom() {
@@ -46,13 +44,11 @@ namespace cvisa {
     }
 
     VISACom::VISACom(const std::string& resourceName, unsigned int timeoutMs, char termChar) : VISACom() {
-        Logger::log(mLogLevel, LogLevel::DEBUG, mAddress,
-                    "VISACom constructed with resource, timeout, and term "
-                    "char.");
+        Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "VISACom constructed with resource, timeout, and termination character.");
         setAddress(resourceName);
-        mTimeout           = timeoutMs;
-        mTimeoutSet       = true;
-        mReadTermChar     = termChar;
+        mTimeout         = timeoutMs;
+        mTimeoutSet      = true;
+        mReadTermChar    = termChar;
         mReadTermCharSet = true;
         connect();
     }
@@ -80,10 +76,9 @@ namespace cvisa {
           mOwnBackend(other.mOwnBackend),
           mLogLevel(other.mLogLevel),
           mAutoErrorCheck(other.mAutoErrorCheck) {
-        
-        other.mRmHandle = VI_NULL;
+        other.mRmHandle   = VI_NULL;
         other.mInstHandle = VI_NULL;
-        other.mBackend = nullptr;
+        other.mBackend    = nullptr;
         other.mOwnBackend = false;
     }
 
@@ -94,23 +89,23 @@ namespace cvisa {
                 delete mBackend;
             }
 
-            mAddress = std::move(other.mAddress);
-            mTimeout = other.mTimeout;
-            mTimeoutSet = other.mTimeoutSet;
-            mReadTermChar = other.mReadTermChar;
+            mAddress         = std::move(other.mAddress);
+            mTimeout         = other.mTimeout;
+            mTimeoutSet      = other.mTimeoutSet;
+            mReadTermChar    = other.mReadTermChar;
             mReadTermCharSet = other.mReadTermCharSet;
-            mWriteTermChar = other.mWriteTermChar;
-            mWriteTermSet = other.mWriteTermSet;
-            mRmHandle = other.mRmHandle;
-            mInstHandle = other.mInstHandle;
-            mBackend = other.mBackend;
-            mOwnBackend = other.mOwnBackend;
-            mLogLevel = other.mLogLevel;
-            mAutoErrorCheck = other.mAutoErrorCheck;
+            mWriteTermChar   = other.mWriteTermChar;
+            mWriteTermSet    = other.mWriteTermSet;
+            mRmHandle        = other.mRmHandle;
+            mInstHandle      = other.mInstHandle;
+            mBackend         = other.mBackend;
+            mOwnBackend      = other.mOwnBackend;
+            mLogLevel        = other.mLogLevel;
+            mAutoErrorCheck  = other.mAutoErrorCheck;
 
-            other.mRmHandle = VI_NULL;
+            other.mRmHandle   = VI_NULL;
             other.mInstHandle = VI_NULL;
-            other.mBackend = nullptr;
+            other.mBackend    = nullptr;
             other.mOwnBackend = false;
         }
         return *this;
@@ -135,9 +130,9 @@ namespace cvisa {
     void VISACom::connect() {
         if (isConnected()) {
             Logger::log(mLogLevel, LogLevel::INFO, mAddress, "Connect called but already connected.");
-            { return; }
+            return;
         }
-        Logger::log(mLogLevel, LogLevel::INFO, mAddress, "Attempting to connect...");
+        Logger::log(mLogLevel, LogLevel::INFO, mAddress, "Attempting to connect using IVI Foundation VISA...");
         if (mAddress.empty()) {
             Logger::log(mLogLevel, LogLevel::ERROR, mAddress, "Connection failed: resource name is empty.");
             throw ConnectionException("Cannot connect: VISA resource name is not set.");
@@ -150,7 +145,10 @@ namespace cvisa {
             throw ConnectionException("Failed to open VISA Default Resource Manager.");
         }
 
-        status = mBackend->visaOpen(mRmHandle, const_cast<char*>(mAddress.c_str()), VI_NULL, VI_NULL, &mInstHandle);
+        // Use IVI Foundation VISA types directly - ViRsrc is const char*
+        // Create a const_cast wrapper to interface with the C API
+        ViRsrc rsrcName = const_cast<char*>(mAddress.c_str());
+        status          = mBackend->visaOpen(mRmHandle, rsrcName, VI_NULL, VI_NULL, &mInstHandle);
         if (status < VI_SUCCESS) {
             mBackend->visaClose(mRmHandle);
             mRmHandle = VI_NULL;
@@ -164,7 +162,7 @@ namespace cvisa {
 
     void VISACom::disconnect() {
         if (!isConnected()) {
-            { return; }
+            return;
         }
         Logger::log(mLogLevel, LogLevel::INFO, mAddress, "Disconnecting from " + mAddress);
         if (mInstHandle != VI_NULL) {
@@ -189,10 +187,13 @@ namespace cvisa {
     // --- Core I/O Operations ---
 
     void VISACom::write(const std::string& command) {
-        if (!isConnected()) { throw ConnectionException("Not connected to an instrument. Cannot write."); }
+        if (!isConnected()) {
+            throw ConnectionException("Not connected to an instrument. Cannot write.");
+        }
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Writing command: " + command);
         ViUInt32 returnCount = 0;
-        ViStatus status      = mBackend->visaWrite(mInstHandle, (unsigned char*)command.c_str(), static_cast<ViUInt32>(command.length()), &returnCount);
+        // Use ViBuf type from IVI Foundation
+        ViStatus status = mBackend->visaWrite(mInstHandle, (ViBuf)command.c_str(), static_cast<ViUInt32>(command.length()), &returnCount);
         checkStatus(status, "visaWrite");
     }
 
@@ -202,7 +203,7 @@ namespace cvisa {
         }
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Writing binary data of size: " + utils::to_string(data.size()));
         ViUInt32 returnCount = 0;
-        ViStatus status      = mBackend->visaWrite(mInstHandle, (unsigned char*)data.data(), static_cast<ViUInt32>(data.size()), &returnCount);
+        ViStatus status      = mBackend->visaWrite(mInstHandle, (ViBuf)data.data(), static_cast<ViUInt32>(data.size()), &returnCount);
         checkStatus(status, "visaWrite (binary)");
     }
 
@@ -211,9 +212,9 @@ namespace cvisa {
             throw ConnectionException("Not connected to an instrument. Cannot read.");
         }
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Reading data (buffer size: " + utils::to_string(bufferSize) + ")");
-        std::vector<char> buffer(bufferSize);
-        ViUInt32          returnCount = 0;
-        ViStatus          status      = mBackend->visaRead(mInstHandle, (unsigned char*)buffer.data(), static_cast<ViUInt32>(buffer.size()), &returnCount);
+        std::vector<ViChar> buffer(bufferSize);
+        ViUInt32            returnCount = 0;
+        ViStatus            status      = mBackend->visaRead(mInstHandle, (ViPBuf)buffer.data(), static_cast<ViUInt32>(buffer.size()), &returnCount);
         checkStatus(status, "visaRead");
         std::string result(buffer.data(), returnCount);
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Read " + utils::to_string(returnCount) + " bytes: " + result);
@@ -221,11 +222,13 @@ namespace cvisa {
     }
 
     std::vector<uint8_t> VISACom::readBinary(size_t bufferSize) {
-        if (!isConnected()) { throw ConnectionException("Not connected to an instrument. Cannot read binary data."); }
+        if (!isConnected()) {
+            throw ConnectionException("Not connected to an instrument. Cannot read binary data.");
+        }
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Reading binary data (buffer size: " + utils::to_string(bufferSize) + ")");
         std::vector<uint8_t> buffer(bufferSize);
         ViUInt32             returnCount = 0;
-        ViStatus             status      = mBackend->visaRead(mInstHandle, buffer.data(), static_cast<ViUInt32>(buffer.size()), &returnCount);
+        ViStatus             status      = mBackend->visaRead(mInstHandle, (ViPBuf)buffer.data(), static_cast<ViUInt32>(buffer.size()), &returnCount);
         checkStatus(status, "visaRead (binary)");
         buffer.resize(returnCount);
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Read " + utils::to_string(returnCount) + " binary bytes.");
@@ -233,7 +236,9 @@ namespace cvisa {
     }
 
     std::string VISACom::query(const std::string& command, size_t bufferSize, unsigned int delayMs) {
-        if (!isConnected()) { throw ConnectionException("Not connected to an instrument. Cannot query."); }
+        if (!isConnected()) {
+            throw ConnectionException("Not connected to an instrument. Cannot query.");
+        }
         write(command);
         if (delayMs > 0) {
             Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Delaying for " + utils::to_string(delayMs) + "ms before reading.");
@@ -243,7 +248,9 @@ namespace cvisa {
     }
 
     std::future<std::string> VISACom::queryAsync(const std::string& command, size_t bufferSize, unsigned int delayMs) {
-        if (!isConnected()) { throw ConnectionException("Not connected to an instrument. Cannot query asynchronously."); }
+        if (!isConnected()) {
+            throw ConnectionException("Not connected to an instrument. Cannot query asynchronously.");
+        }
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Starting asynchronous query.");
         return std::async(std::launch::async, [this, command, bufferSize, delayMs]() { return this->query(command, bufferSize, delayMs); });
     }
@@ -275,14 +282,18 @@ namespace cvisa {
     // --- Instrument Control & Status ---
 
     void VISACom::clear() {
-        if (!isConnected()) { throw ConnectionException("Not connected to an instrument. Cannot clear."); }
+        if (!isConnected()) {
+            throw ConnectionException("Not connected to an instrument. Cannot clear.");
+        }
         Logger::log(mLogLevel, LogLevel::INFO, mAddress, "Clearing instrument interface.");
         ViStatus status = mBackend->visaClear(mInstHandle);
         checkStatus(status, "visaClear");
     }
 
     uint8_t VISACom::readStatusByte() {
-        if (!isConnected()) { throw ConnectionException("Not connected to an instrument. Cannot read status byte."); }
+        if (!isConnected()) {
+            throw ConnectionException("Not connected to an instrument. Cannot read status byte.");
+        }
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Reading status byte.");
         ViUInt16 statusByte = 0;
         ViStatus status     = mBackend->visaReadSTB(mInstHandle, &statusByte);
@@ -305,7 +316,7 @@ namespace cvisa {
 
     void VISACom::setTimeout(unsigned int timeoutMs) {
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Setting timeout to " + utils::to_string(timeoutMs) + " ms.");
-        mTimeout     = timeoutMs;
+        mTimeout    = timeoutMs;
         mTimeoutSet = true;
         applyTimeout();
     }
@@ -313,7 +324,7 @@ namespace cvisa {
     void VISACom::setReadTermination(char termChar, bool enable) {
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress,
                     "Setting read termination character to '" + std::string(1, termChar) + "' with enable=" + utils::to_string(enable));
-        mReadTermChar     = termChar;
+        mReadTermChar    = termChar;
         mReadTermCharSet = enable;
         if (isConnected()) {
             if (mReadTermCharSet) {
@@ -327,8 +338,8 @@ namespace cvisa {
 
     void VISACom::setWriteTermination(char termChar) {
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Setting write termination character to '" + std::string(1, termChar) + "'.");
-        mWriteTermChar     = termChar;
-        mWriteTermSet = true;
+        mWriteTermChar = termChar;
+        mWriteTermSet  = true;
         applyWriteTermination();
     }
 
@@ -336,29 +347,33 @@ namespace cvisa {
 
     std::vector<std::string> VISACom::findResources(const std::string& query) {
         RealVISABackend backend;
-        ViSession rmSession = VI_NULL;
-        ViStatus  status    = backend.visaOpenDefaultRM(&rmSession);
+        ViSession       rmSession = VI_NULL;
+        ViStatus        status    = backend.visaOpenDefaultRM(&rmSession);
         if (status < VI_SUCCESS) {
             throw VisaException("Could not open VISA Default Resource Manager to find resources.");
         }
 
-        ViFindList               findList = 0;
+        ViFindList               findList    = 0;
         ViUInt32                 returnCount = 0;
-        char                     instrumentDescription[VI_FIND_BUFLEN];
+        ViRsrc                   instrumentDescription;
         std::vector<std::string> resources;
 
-        status = backend.visaFindRsrc(rmSession, const_cast<char*>(query.c_str()), &findList, &returnCount, instrumentDescription);
+        status = backend.visaFindRsrc(rmSession, query.c_str(), &findList, &returnCount, instrumentDescription);
         if (status < VI_SUCCESS) {
             backend.visaClose(rmSession);
-            if (status == VI_ERROR_RSRC_NFOUND) { return {}; }
+            if (status == VI_ERROR_RSRC_NFOUND) {
+                return {};
+            }
             throw VisaException("Failed to find VISA resources.");
         }
 
         if (returnCount > 0) {
             resources.emplace_back(instrumentDescription);
             for (ViUInt32 i = 1; i < returnCount; ++i) {
-                status = backend.visaFindNext(&findList, instrumentDescription);
-                if (status < VI_SUCCESS) { break; }
+                status = backend.visaFindNext(findList, instrumentDescription);
+                if (status < VI_SUCCESS) {
+                    break;
+                }
                 resources.emplace_back(instrumentDescription);
             }
         }
@@ -374,14 +389,18 @@ namespace cvisa {
     // --- Private Helpers ---
 
     void VISACom::applyTimeout() {
-        if (!isConnected() || !mTimeoutSet) { return; }
+        if (!isConnected() || !mTimeoutSet) {
+            return;
+        }
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Applying timeout: " + utils::to_string(mTimeout) + " ms.");
         ViStatus status = mBackend->visaSetAttribute(mInstHandle, VI_ATTR_TMO_VALUE, static_cast<ViUInt32>(mTimeout));
         checkStatus(status, "visaSetAttribute (Timeout)");
     }
 
     void VISACom::applyReadTermination() {
-        if (!isConnected() || !mReadTermCharSet) { return; }
+        if (!isConnected() || !mReadTermCharSet) {
+            return;
+        }
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Applying read termination char '" + std::string(1, mReadTermChar) + "' with enable=true");
         ViStatus status;
         status = mBackend->visaSetAttribute(mInstHandle, VI_ATTR_TERMCHAR, static_cast<ViInt8>(mReadTermChar));
@@ -391,7 +410,9 @@ namespace cvisa {
     }
 
     void VISACom::applyWriteTermination() {
-        if (!isConnected() || !mWriteTermSet) { return; }
+        if (!isConnected() || !mWriteTermSet) {
+            return;
+        }
         Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Applying write termination char '" + std::string(1, mWriteTermChar) + "'.");
         ViStatus status;
         status = mBackend->visaSetAttribute(mInstHandle, VI_ATTR_TERMCHAR, static_cast<ViInt8>(mWriteTermChar));
@@ -401,7 +422,7 @@ namespace cvisa {
     }
 
     void VISACom::applyConfiguration() {
-        Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Applying stored configurations.");
+        Logger::log(mLogLevel, LogLevel::DEBUG, mAddress, "Applying stored IVI Foundation VISA configurations.");
         applyTimeout();
         applyReadTermination();
         applyWriteTermination();
@@ -409,9 +430,9 @@ namespace cvisa {
 
     void VISACom::checkStatus(ViStatus status, const std::string& functionName) {
         if (status < VI_SUCCESS) {
-            char errorBuffer[ERROR_BUFFER_SIZE] = {0};
+            ViChar errorBuffer[ERROR_BUFFER_SIZE] = {0};
             mBackend->visaStatusDesc(mRmHandle, status, errorBuffer);
-            std::string errorMessage = "VISA Error in " + functionName + ": " + errorBuffer + " (Status: " + utils::to_string(status) + ")";
+            std::string errorMessage = "IVI Foundation VISA Error in " + functionName + ": " + std::string(errorBuffer) + " (Status: " + utils::to_string(status) + ")";
             Logger::log(mLogLevel, LogLevel::ERROR, mAddress, errorMessage);
             if (status == VI_ERROR_TMO) {
                 throw TimeoutException(errorMessage);
