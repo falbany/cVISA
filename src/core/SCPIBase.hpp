@@ -182,6 +182,15 @@ namespace cvisa {
             /**
              * @brief Executes a command, dispatching to `write` or `query`.
              *
+             * @param spec The `SCPICommand` object defining the command.
+             * @return The instrument's string response for `QUERY` commands, or an
+             * empty string for `WRITE` commands.
+             */
+            std::string executeCommand(const SCPICommand& spec);
+
+            /**
+             * @brief Executes a command with arguments, dispatching to `write` or `query`.
+             *
              * This is the core command execution engine. It formats the command, sends
              * it to the instrument, and retrieves a response for queries.
              *
@@ -196,6 +205,14 @@ namespace cvisa {
 
             /**
              * @brief Executes an asynchronous `QUERY` command.
+             * @param spec The `SCPICommand` for the `QUERY` command.
+             * @return A `std::future<std::string>` that will contain the instrument's
+             * response.
+             */
+            std::future<std::string> executeCommandAsync(const SCPICommand& spec);
+
+            /**
+             * @brief Executes an asynchronous `QUERY` command with arguments.
              * @tparam Args The types of the format arguments.
              * @param spec The `SCPICommand` for the `QUERY` command.
              * @param args The arguments to format into the command string.
@@ -213,6 +230,16 @@ namespace cvisa {
 
             /**
              * @brief Executes a query and parses the response into the specified type.
+             *
+             * @tparam T The desired return type.
+             * @param spec The `SCPICommand` for the `QUERY` command.
+             * @return The parsed response value.
+             */
+            template <typename T>
+            T queryAndParse(const SCPICommand& spec);
+
+            /**
+             * @brief Executes a query with arguments and parses the response into the specified type.
              *
              * This is a high-level helper that combines `executeCommand` with automatic
              * type parsing.

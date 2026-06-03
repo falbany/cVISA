@@ -46,6 +46,7 @@ ViStatus viRead(ViSession vi, unsigned char* buf, ViUInt32 count, ViUInt32* retC
 ViStatus viClear(ViSession vi);
 ViStatus viReadSTB(ViSession vi, ViUInt16* status);
 ViStatus viSetAttribute(ViSession vi, int attrName, int attrValue);
+ViStatus viGetAttribute(ViSession vi, int attrName, void* attrValue);
 ViStatus viFindRsrc(ViSession vi, char* expr, ViFindList* findList, ViUInt32* retCount, char* desc);
 ViStatus viFindNext(ViFindList findList, char* desc);
 ViStatus viStatusDesc(ViSession vi, ViStatus status, char* desc);

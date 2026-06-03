@@ -97,7 +97,6 @@ else()
     target_link_libraries(cvisa PRIVATE ${VISA_LIBRARY})
 endif()
 
-
 # --- Installation ---
 install(TARGETS cvisa
     EXPORT cvisaTargets
@@ -134,7 +133,7 @@ if(BUILD_EXAMPLES)
     target_link_libraries(agilent66xxa_example PRIVATE cvisa)
 endif()
 
-# --- Testing ---
+# --- Tests ---
 enable_testing()
 add_subdirectory(tests)
 

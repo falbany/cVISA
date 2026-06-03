@@ -20,16 +20,16 @@ namespace cvisa {
         template <typename... Args>
         std::string SCPIBase::executeCommand(const SCPICommand& spec, Args... args) {
             std::string command = formatCommand(spec.command, args...);
-            Logger::log(m_logLevel, LogLevel::INFO, m_resourceName, "Executing command: " + command);
+            Logger::log(mLogLevel, LogLevel::INFO, mAddress, "Executing command: " + command);
 
             std::string response;
             if (spec.type == CommandType::WRITE) {
                 write(command);
             } else {
-                response = query(command, 2048, spec.delay_ms);
+                response = query(command, 2048, spec.delayMs);
             }
 
-            if (m_autoErrorCheckEnabled) {
+            if (mAutoErrorCheck) {
                 readErrorQueue();
             }
 
@@ -44,7 +44,13 @@ namespace cvisa {
                     "commands.");
             }
             std::string command = formatCommand(spec.command, args...);
-            return queryAsync(command, 2048, spec.delay_ms);
+            return queryAsync(command, 2048, spec.delayMs);
+        }
+
+        template <typename T>
+        T SCPIBase::queryAndParse(const SCPICommand& spec) {
+            std::string response = executeCommand(spec);
+            return parseResponse<T>(response);
         }
 
         template <typename T, typename... Args>

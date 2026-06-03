@@ -39,12 +39,12 @@ namespace cvisa {
         const char*  command;         // The SCPI command string template (e.g., "VOLT %f").
         CommandType  type;            // The type of the command (WRITE or QUERY).
         ResponseType responseType;    // The expected type of the response.
-        unsigned int delay_ms;        // Optional delay in ms to wait after a write, before a read.
+        unsigned int delayMs;         // Optional delay in ms to wait after a write, before a read.
         std::string  description;     // A human-readable description of the command.
 
         // C++11 constructor to provide default values.
         SCPICommand(const char* cmd, CommandType t, ResponseType rt = ResponseType::NONE, unsigned int delay = 0, const std::string& desc = "")
-            : command(cmd), type(t), responseType(rt), delay_ms(delay), description(desc) {}
+            : command(cmd), type(t), responseType(rt), delayMs(delay), description(desc) {}
     };
 
     /**

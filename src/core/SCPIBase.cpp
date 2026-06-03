@@ -2,14 +2,15 @@
 
 #include "exceptions.hpp"
 
-#include <algorithm>    // For std::find_if_not
 #include <string>
 
 namespace {
     // Helper to trim leading/trailing whitespace
     std::string trim(const std::string& s) {
         auto start = s.find_first_not_of(" \t\n\r\f\v");
-        if (start == std::string::npos) return "";
+        if (start == std::string::npos) {
+            return "";
+        }
         auto end = s.find_last_not_of(" \t\n\r\f\v");
         return s.substr(start, (end - start + 1));
     }
@@ -79,6 +80,30 @@ namespace cvisa {
             }
         }
 
+        std::string SCPIBase::executeCommand(const SCPICommand& spec) {
+            Logger::log(mLogLevel, LogLevel::INFO, mAddress, "Executing command: " + std::string(spec.command));
+
+            std::string response;
+            if (spec.type == CommandType::WRITE) {
+                write(spec.command);
+            } else {
+                response = query(spec.command, 2048, spec.delayMs);
+            }
+
+            if (mAutoErrorCheck) {
+                readErrorQueue();
+            }
+
+            return response;
+        }
+
+        std::future<std::string> SCPIBase::executeCommandAsync(const SCPICommand& spec) {
+            if (spec.type != CommandType::QUERY) {
+                throw std::logic_error("executeCommandAsync can only be used with QUERY commands.");
+            }
+            return queryAsync(spec.command, 2048, spec.delayMs);
+        }
+
         void SCPIBase::readErrorQueue() {
             std::string response = query("SYST:ERR?");
             // SCPI standard: "+0,\"No error\"" means no error.
@@ -113,11 +138,11 @@ namespace cvisa {
                 }
             }
 
-            Logger::log(m_logLevel, LogLevel::INFO, m_resourceName, "Executing command chain: " + chained_command);
+            Logger::log(mLogLevel, LogLevel::INFO, mAddress, "Executing command chain: " + chained_command);
 
             write(chained_command);
 
-            if (m_autoErrorCheckEnabled) {
+            if (mAutoErrorCheck) {
                 readErrorQueue();
             }
         }

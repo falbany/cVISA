@@ -2,10 +2,10 @@
 #define CVISA_VISA_INTERFACE_HPP
 
 #include "Logger.hpp"
+#include "IVISABackend.hpp"
 
 #include <cstdint>
 #include <future>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -25,25 +25,36 @@ namespace cvisa {
      * for manual connection management.
      */
     class VISACom {
+      public:
+        // Configuration
+        static const size_t DEFAULT_READ_BUFFER_SIZE   = 2048;
+        static const size_t DEFAULT_BINARY_BUFFER_SIZE = 4096;
+
       protected:
         // --- Member Variables ---
-        std::string  m_resourceName;
-        unsigned int m_timeout_ms;
-        bool         m_timeout_ms_set;
-        char         m_read_termination;
-        bool         m_read_termination_set;
-        char         m_write_termination;
-        bool         m_write_termination_set;
+        static const size_t ERROR_BUFFER_SIZE = 256;
+
+        std::string  mAddress;
+        unsigned int mTimeout;
+        bool         mTimeoutSet;
+        char         mReadTermChar;
+        bool         mReadTermCharSet;
+        char         mWriteTermChar;
+        bool         mWriteTermSet;
 
         // VISA handles
-        ViSession m_resourceManagerHandle;
-        ViSession m_instrumentHandle;
+        ViSession mRmHandle;
+        ViSession mInstHandle;
+
+        // Backend for VISA C API
+        IVISABackend* mBackend;
+        bool          mOwnBackend;
 
         // Logging
-        LogLevel m_logLevel;
+        LogLevel mLogLevel;
 
         // Error Checking
-        bool m_autoErrorCheckEnabled;
+        bool mAutoErrorCheck;
 
       public:
         // --- Constructors and Destructor ---
@@ -53,6 +64,13 @@ namespace cvisa {
         VISACom();
 
         /**
+         * @brief Constructor with optional backend injection for testing.
+         * @param backend Pointer to an IVISABackend implementation. If null, a RealVISABackend is used.
+         * @param ownBackend If true, VISACom takes ownership of the backend pointer and will delete it.
+         */
+        explicit VISACom(IVISABackend* backend, bool ownBackend = false);
+
+        /**
          * @brief Constructs and connects with resource name only.
          */
         explicit VISACom(const std::string& resourceName);
@@ -60,7 +78,7 @@ namespace cvisa {
         /**
          * @brief Constructs and connects with timeout and read termination.
          */
-        explicit VISACom(const std::string& resourceName, unsigned int timeout_ms, char read_termination);
+        explicit VISACom(const std::string& resourceName, unsigned int timeoutMs, char termChar);
 
         /**
          * @brief Destructor. Disconnects from the instrument if connected.
@@ -109,9 +127,9 @@ namespace cvisa {
          * This value is applied to the instrument immediately if connected, or
          * during the next `connect()` call.
          *
-         * @param timeout_ms The timeout in milliseconds.
+         * @param timeoutMs The timeout in milliseconds.
          */
-        virtual void setTimeout(unsigned int timeout_ms);
+        virtual void setTimeout(unsigned int timeoutMs);
 
         /**
          * @brief Configures the character used to terminate read operations.
@@ -119,17 +137,17 @@ namespace cvisa {
          * This value is applied to the instrument immediately if connected, or
          * during the next `connect()` call.
          *
-         * @param term_char The termination character.
+         * @param termChar The termination character.
          * @param enable If true, read termination is enabled; otherwise, it's
          * disabled.
          */
-        virtual void setReadTermination(char term_char, bool enable = true);
+        virtual void setReadTermination(char termChar, bool enable = true);
         /**
          * @brief Configures the character to be appended to every write operation.
          *
-         * @param term_char The termination character to append to writes.
+         * @param termChar The termination character to append to writes.
          */
-        virtual void setWriteTermination(char term_char);
+        virtual void setWriteTermination(char termChar);
 
         /**
          * @brief Sets the verbosity level for logging.
@@ -225,7 +243,7 @@ namespace cvisa {
          * @throws TimeoutException if the read operation times out.
          * @throws CommandException on other VISA communication errors.
          */
-        virtual std::string read(size_t bufferSize = 2048);
+        virtual std::string read(size_t bufferSize = DEFAULT_READ_BUFFER_SIZE);
 
         /**
          * @brief Reads a block of binary data from the instrument.
@@ -241,43 +259,43 @@ namespace cvisa {
          * @throws TimeoutException if the read operation times out.
          * @throws CommandException on other VISA communication errors.
          */
-        virtual std::vector<uint8_t> readBinary(size_t bufferSize = 4096);
+        virtual std::vector<uint8_t> readBinary(size_t bufferSize = DEFAULT_BINARY_BUFFER_SIZE);
 
         /**
          * @brief Performs a query: writes a command and reads the response.
          *
          * @param command The SCPI query string to send (e.g., "*IDN_Query?").
          * @param bufferSize The maximum number of bytes to expect in the response.
-         * @param delay_ms An optional delay in milliseconds to wait between the
+         * @param delayMs An optional delay in milliseconds to wait between the
          * write and read operations.
          * @return The string response from the instrument.
          * @throws ConnectionException if the interface is not connected.
          * @throws TimeoutException if the read operation times out.
          * @throws CommandException on other VISA communication errors.
          */
-        virtual std::string query(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0);
+        virtual std::string query(const std::string& command, size_t bufferSize = DEFAULT_READ_BUFFER_SIZE, unsigned int delayMs = 0);
 
         /**
          * @brief Performs a query asynchronously.
          *
          * @param command The SCPI query string to send.
          * @param bufferSize The maximum number of bytes for the response.
-         * @param delay_ms Optional delay between write and read.
+         * @param delayMs Optional delay between write and read.
          * @return A `std::future<std::string>` that will hold the instrument's
          * response.
          * @throws ConnectionException if the interface is not connected.
          */
-        virtual std::future<std::string> queryAsync(const std::string& command, size_t bufferSize = 2048, unsigned int delay_ms = 0);
+        virtual std::future<std::string> queryAsync(const std::string& command, size_t bufferSize = DEFAULT_READ_BUFFER_SIZE, unsigned int delayMs = 0);
 
         /**
          * @brief Waits for the instrument to complete its current operation.
          *
          * Sends "*OPC?" and waits for a response.
          *
-         * @param timeout_ms Optional timeout for this specific wait.
+         * @param timeoutMs Optional timeout for this specific wait.
          * @return True if operation completed, false on timeout.
          */
-        virtual bool waitForOPC(unsigned int timeout_ms = 0);
+        virtual bool waitForOPC(unsigned int timeoutMs = 0);
 
         // --- Instrument Control & Status ---
         /**

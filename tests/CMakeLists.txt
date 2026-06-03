@@ -17,7 +17,12 @@ FetchContent_MakeAvailable(googletest)
 add_executable(VISACom_test VISACom_test.cpp)
 
 # Link against the library from the parent scope and GTest
-target_link_libraries(VISACom_test PRIVATE cvisa gtest_main)
+target_link_libraries(VISACom_test PRIVATE cvisa gtest_main gmock)
+
+target_include_directories(VISACom_test PRIVATE 
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/include
+)
 
 # Register tests with CTest
 include(GoogleTest)
